@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Veyra — Connexion</title>
+<link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="/login.css">
+</head>
+
+<body>
+
+<div class="auth-page">
+
+  <div class="auth-brand">
+    <div class="auth-logo">V</div>
+    <h1>Veyra</h1>
+    <p>Partage. Discute. Découvre.</p>
+  </div>
+
+  <div class="auth-card">
+
+    <div id="loginView">
+
+      <span class="eyebrow">BIENVENUE</span>
+
+      <h2>Se connecter</h2>
+
+      <p class="muted">
+        Retrouve ton espace Veyra.
+      </p>
+
+      <form id="loginForm">
+
+        <label>Pseudo ou email</label>
+        <input
+          id="loginIdentifier"
+          required
+          autocomplete="username"
+        >
+
+        <label>Mot de passe</label>
+        <input
+          id="loginPassword"
+          type="password"
+          required
+          autocomplete="current-password"
+        >
+
+        <button class="auth-button">
+          Se connecter
+        </button>
+
+      </form>
+
+      <div id="loginError" class="error"></div>
+
+      <p class="switch">
+        Pas encore de compte ?
+        <button id="showRegister">Créer un compte</button>
+      </p>
+
+    </div>
+
+
+    <div id="registerView" class="hidden">
+
+      <span class="eyebrow">REJOINDRE VEYRA</span>
+
+      <h2>Créer ton compte</h2>
+
+      <p class="muted">
+        Quelques secondes pour commencer.
+      </p>
+
+      <form id="registerForm">
+
+        <label>Pseudo</label>
+        <input
+          id="registerUsername"
+          required
+          minlength="3"
+          maxlength="24"
+          autocomplete="username"
+        >
+
+        <label>Email</label>
+        <input
+          id="registerEmail"
+          type="email"
+          required
+          autocomplete="email"
+        >
+
+        <label>Âge</label>
+        <input
+          id="registerAge"
+          type="number"
+          min="13"
+          required
+        >
+
+        <label>Mot de passe</label>
+        <input
+          id="registerPassword"
+          type="password"
+          minlength="6"
+          required
+          autocomplete="new-password"
+        >
+
+        <label class="check">
+          <input id="privacy" type="checkbox" required>
+          <span>
+            J'accepte les règles de confidentialité et
+            les conditions d'utilisation.
+          </span>
+        </label>
+
+        <button class="auth-button">
+          Créer mon compte
+        </button>
+
+      </form>
+
+      <div id="registerError" class="error"></div>
+
+      <p class="switch">
+        Déjà un compte ?
+        <button id="showLogin">Se connecter</button>
+      </p>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script src="/login.js"></script>
+
+</body>
+</html>

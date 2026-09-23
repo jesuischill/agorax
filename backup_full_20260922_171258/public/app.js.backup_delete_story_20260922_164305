@@ -1,0 +1,1388 @@
+let me = null;
+let socket = null;
+let currentPrivateUser = null;
+let currentRoom = null;
+let presenceUsers = [];
+let selectedPostFile = null;
+let selectedStoryFile = null;
+
+const $ = id => document.getElementById(id);
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatDate(date) {
+  const d = new Date(date);
+
+  return d.toLocaleString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+async function api(url, options = {}) {
+  const response = await fetch(url, options);
+
+  const data = await response
+    .json()
+    .catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      data.error || "Une erreur est survenue."
+    );
+  }
+
+  return data;
+}
+
+function toast(message) {
+  $("toast").textContent = message;
+  $("toast").classList.add("show");
+
+  clearTimeout(toast.timer);
+
+  toast.timer = setTimeout(() => {
+    $("toast").classList.remove("show");
+  }, 2600);
+}
+
+function showPage(page) {
+  document.querySelectorAll(".page").forEach(p => {
+    p.classList.remove("active");
+  });
+
+  const target = $("page-" + page);
+
+  if (target) {
+    target.classList.add("active");
+  }
+
+  document.querySelectorAll(".nav-item").forEach(btn => {
+    btn.classList.toggle(
+      "active",
+      btn.dataset.page === page
+    );
+  });
+
+  if (page === "home") {
+    loadFeed();
+    loadStories();
+  }
+
+  if (page === "stories") {
+    loadStoriesFull();
+  }
+
+  if (page === "chat") {
+    loadConversations();
+  }
+
+  if (page === "public") {
+    loadPublic();
+  }
+
+  if (page === "profile") {
+    loadProfile();
+  }
+}
+
+function avatarHtml(username, avatar = "") {
+  if (avatar) {
+    return `
+      <img
+        class="avatar-img"
+        src="${escapeHtml(avatar)}"
+        alt=""
+      >
+    `;
+  }
+
+  return escapeHtml(
+    String(username || "?")
+      .charAt(0)
+      .toUpperCase()
+  );
+}
+
+async function init() {
+  try {
+    const auth = await api("/api/auth/me");
+
+    if (!auth.authenticated) {
+      location.href = "/login.html";
+      return;
+    }
+
+    me = auth.user;
+
+    updateUserInterface();
+
+    socket = io();
+
+    socket.on("connect", () => {
+      socket.emit("joinPublic");
+    });
+
+    socket.on("presence", users => {
+      presenceUsers = users || [];
+      updatePrivateStatus();
+    });
+
+    socket.on("privateMessage", message => {
+      if (
+        currentPrivateUser &&
+        (
+          (
+            message.from === me.username &&
+            message.to === currentPrivateUser
+          ) ||
+          (
+            message.from === currentPrivateUser &&
+            message.to === me.username
+          )
+        )
+      ) {
+        appendMessage(
+          $("privateMessages"),
+          message
+        );
+
+        $("privateMessages").scrollTop =
+          $("privateMessages").scrollHeight;
+      }
+
+      loadConversations();
+    });
+
+    socket.on("publicMessage", message => {
+      if (
+        document
+          .querySelector("#page-public")
+          .classList.contains("active")
+      ) {
+        appendMessage(
+          $("publicMessages"),
+          message
+        );
+
+        $("publicMessages").scrollTop =
+          $("publicMessages").scrollHeight;
+      }
+    });
+
+    socket.on("typing", data => {
+      if (
+        currentPrivateUser === data.from
+      ) {
+        $("typingPrivate").classList.toggle(
+          "hidden",
+          !data.active
+        );
+      }
+    });
+
+    setupNavigation();
+
+    await loadFeed();
+    await loadStories();
+
+  } catch (error) {
+    console.error(error);
+    location.href = "/login.html";
+  }
+}
+
+function updateUserInterface() {
+  $("navAvatar").textContent =
+    me.username.charAt(0).toUpperCase();
+
+  $("topProfile").textContent =
+    me.username.charAt(0).toUpperCase();
+
+  $("composerAvatar").textContent =
+    me.username.charAt(0).toUpperCase();
+}
+
+function setupNavigation() {
+  document.querySelectorAll("[data-page]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      showPage(btn.dataset.page);
+    });
+  });
+
+  $("topSearch").onclick = () => {
+    showPage("search");
+    $("globalSearch").focus();
+  };
+
+  $("topProfile").onclick = () => {
+    showPage("profile");
+  };
+
+  $("composerButton").onclick = () => {
+    $("postModal").classList.remove("hidden");
+  };
+
+  $("newPostTop").onclick = () => {
+    $("postModal").classList.remove("hidden");
+  };
+
+  $("createStory").onclick = () => {
+    $("storyModal").classList.remove("hidden");
+  };
+
+  $("openStories").onclick = () => {
+    showPage("stories");
+  };
+
+  document
+    .querySelectorAll("[data-close]")
+    .forEach(btn => {
+      btn.onclick = () => {
+        $(btn.dataset.close).classList.add("hidden");
+      };
+    });
+
+  $("composerFile").onclick = () => {
+    $("composerFileInput").click();
+  };
+
+  $("composerFileInput").onchange = e => {
+    if (e.target.files[0]) {
+      selectedPostFile = e.target.files[0];
+      $("postModal").classList.remove("hidden");
+      $("postPreview").textContent =
+        selectedPostFile.name;
+    }
+  };
+
+  $("postFile").onchange = e => {
+    selectedPostFile =
+      e.target.files[0] || null;
+
+    $("postPreview").textContent =
+      selectedPostFile
+        ? selectedPostFile.name
+        : "";
+  };
+
+  $("storyFile").onchange = e => {
+    selectedStoryFile =
+      e.target.files[0] || null;
+
+    $("storyPreview").textContent =
+      selectedStoryFile
+        ? selectedStoryFile.name
+        : "";
+  };
+
+  $("publishPost").onclick = publishPost;
+  $("publishStory").onclick = publishStory;
+
+  $("newConversation").onclick = () => {
+    showPage("search");
+    $("globalSearch").focus();
+  };
+
+  $("closePrivate").onclick = () => {
+    currentPrivateUser = null;
+    $("privateChat").classList.add("hidden");
+    $("conversationView").classList.remove("hidden");
+  };
+
+  $("privateSend").onclick = sendPrivate;
+
+  $("privateInput").addEventListener(
+    "keydown",
+    e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendPrivate();
+      }
+    }
+  );
+
+  $("privateInput").addEventListener(
+    "input",
+    () => {
+      if (!socket || !currentPrivateUser) return;
+
+      socket.emit("typing", {
+        to: currentPrivateUser,
+        active:
+          $("privateInput").value.length > 0
+      });
+    }
+  );
+
+  $("publicSend").onclick = sendPublic;
+
+  $("publicInput").addEventListener(
+    "keydown",
+    e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendPublic();
+      }
+    }
+  );
+
+  $("chatSearch").addEventListener(
+    "input",
+    searchChatUsers
+  );
+
+  $("globalSearch").addEventListener(
+    "input",
+    searchGlobal
+  );
+}
+
+async function loadFeed() {
+  try {
+    const posts = await api("/api/posts");
+
+    $("feed").innerHTML = "";
+
+    if (!posts.length) {
+      $("feed").innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">✦</div>
+          <h3>Ton fil est vide</h3>
+          <p>Publie quelque chose pour commencer.</p>
+        </div>
+      `;
+      return;
+    }
+
+    posts.forEach(post => {
+      $("feed").insertAdjacentHTML(
+        "beforeend",
+        postHtml(post)
+      );
+    });
+
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+function postHtml(post) {
+  const liked =
+    Array.isArray(post.likes) &&
+    post.likes.includes(me.username);
+
+  const comments =
+    Array.isArray(post.comments)
+      ? post.comments
+      : [];
+
+  return `
+    <article class="post-card">
+
+      <div class="post-head">
+
+        <div class="avatar">
+          ${avatarHtml(post.from)}
+        </div>
+
+        <div>
+          <strong>@${escapeHtml(post.from)}</strong>
+          <span>${formatDate(post.createdAt)}</span>
+        </div>
+
+      </div>
+
+      ${
+        post.text
+          ? `
+            <div class="post-text">
+              ${escapeHtml(post.text)}
+            </div>
+          `
+          : ""
+      }
+
+      ${
+        post.attachment
+          ? attachmentHtml(post.attachment)
+          : ""
+      }
+
+      <div class="post-actions">
+
+        <button
+          onclick="likePost('${escapeHtml(post.id)}')"
+          class="${liked ? "liked" : ""}"
+        >
+          ♡ ${post.likes?.length || 0}
+        </button>
+
+        <button
+          onclick="focusComment('${escapeHtml(post.id)}')"
+        >
+          ◯ ${comments.length}
+        </button>
+
+        <button
+          onclick="sharePost('${escapeHtml(post.id)}')"
+        >
+          ↗
+        </button>
+
+      </div>
+
+      ${
+        comments.length
+          ? `
+            <div class="comments">
+              ${comments
+                .slice(-3)
+                .map(c => `
+                  <div class="comment">
+                    <strong>@${escapeHtml(c.from)}</strong>
+                    ${escapeHtml(c.text)}
+                  </div>
+                `)
+                .join("")}
+            </div>
+          `
+          : ""
+      }
+
+      <div class="comment-box">
+
+        <input
+          id="comment-${escapeHtml(post.id)}"
+          placeholder="Ajouter un commentaire..."
+          onkeydown="commentKey(event,'${escapeHtml(post.id)}')"
+        >
+
+      </div>
+
+    </article>
+  `;
+}
+
+window.likePost = async id => {
+  try {
+    await api(
+      "/api/posts/" +
+      encodeURIComponent(id) +
+      "/like",
+      {
+        method: "POST"
+      }
+    );
+
+    loadFeed();
+  } catch (error) {
+    toast(error.message);
+  }
+};
+
+window.focusComment = id => {
+  const input = $("comment-" + id);
+
+  if (input) input.focus();
+};
+
+window.commentKey = async (event, id) => {
+  if (event.key !== "Enter") return;
+
+  const input = $("comment-" + id);
+  const text = input.value.trim();
+
+  if (!text) return;
+
+  try {
+    await api(
+      "/api/posts/" +
+      encodeURIComponent(id) +
+      "/comments",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ text })
+      }
+    );
+
+    loadFeed();
+  } catch (error) {
+    toast(error.message);
+  }
+};
+
+window.sharePost = id => {
+  toast("Publication prête à être partagée.");
+};
+
+async function publishPost() {
+  const text =
+    $("postText").value.trim();
+
+  if (!text && !selectedPostFile) {
+    toast("Ajoute du texte ou un fichier.");
+    return;
+  }
+
+  try {
+    const form = new FormData();
+
+    form.append("text", text);
+
+    if (selectedPostFile) {
+      form.append(
+        "attachment",
+        selectedPostFile
+      );
+    }
+
+    await api("/api/posts", {
+      method: "POST",
+      body: form
+    });
+
+    $("postText").value = "";
+    $("postPreview").textContent = "";
+    selectedPostFile = null;
+
+    $("postModal").classList.add("hidden");
+
+    await loadFeed();
+
+    toast("Publication créée.");
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+async function loadStories() {
+  try {
+    const stories =
+      await api("/api/stories");
+
+    const container =
+      $("stories");
+
+    container.innerHTML = `
+      <button class="story-card add-story"
+        onclick="document.getElementById('storyModal').classList.remove('hidden')">
+
+        <div class="story-plus">+</div>
+
+        <span>Ma story</span>
+
+      </button>
+    `;
+
+    stories
+      .slice(0, 12)
+      .forEach(story => {
+        container.insertAdjacentHTML(
+          "beforeend",
+          storyCardHtml(story)
+        );
+      });
+
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function loadStoriesFull() {
+  try {
+    const stories =
+      await api("/api/stories");
+
+    $("storiesFull").innerHTML = "";
+
+    if (!stories.length) {
+      $("storiesFull").innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">◉</div>
+          <h3>Aucune story</h3>
+          <p>Ajoute ta première story.</p>
+        </div>
+      `;
+      return;
+    }
+
+    stories.forEach(story => {
+      $("storiesFull").insertAdjacentHTML(
+        "beforeend",
+        storyLargeHtml(story)
+      );
+    });
+
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+function storyCardHtml(story) {
+  const image =
+    story.attachment &&
+    story.attachment.type &&
+    story.attachment.type.startsWith("image/");
+
+  return `
+    <button
+      class="story-card"
+      onclick="openStory('${escapeHtml(story.id)}')"
+    >
+
+      <div class="story-visual">
+
+        ${
+          image
+            ? `
+              <img
+                src="${escapeHtml(story.attachment.url)}"
+                alt=""
+              >
+            `
+            : `
+              <div class="story-letter">
+                ${escapeHtml(
+                  story.from.charAt(0).toUpperCase()
+                )}
+              </div>
+            `
+        }
+
+      </div>
+
+      <strong>
+        @${escapeHtml(story.from)}
+      </strong>
+
+    </button>
+  `;
+}
+
+function storyLargeHtml(story) {
+  const image =
+    story.attachment &&
+    story.attachment.type &&
+    story.attachment.type.startsWith("image/");
+
+  return `
+    <article class="story-large">
+
+      ${
+        image
+          ? `
+            <img
+              src="${escapeHtml(story.attachment.url)}"
+              alt=""
+            >
+          `
+          : `
+            <div class="story-large-placeholder">
+              ${escapeHtml(story.text || "Story")}
+            </div>
+          `
+      }
+
+      <div class="story-overlay">
+
+        <strong>
+          @${escapeHtml(story.from)}
+        </strong>
+
+        ${
+          story.text
+            ? `
+              <p>
+                ${escapeHtml(story.text)}
+              </p>
+            `
+            : ""
+        }
+
+      </div>
+
+    </article>
+  `;
+}
+
+window.openStory = id => {
+  const card =
+    document.querySelector(
+      `[onclick*="${id}"]`
+    );
+
+  if (card) {
+    card.scrollIntoView({
+      behavior: "smooth"
+    });
+  }
+};
+
+async function publishStory() {
+  const text =
+    $("storyText").value.trim();
+
+  if (!text && !selectedStoryFile) {
+    toast("Ajoute une photo ou un texte.");
+    return;
+  }
+
+  try {
+    const form = new FormData();
+
+    form.append("text", text);
+
+    if (selectedStoryFile) {
+      form.append(
+        "attachment",
+        selectedStoryFile
+      );
+    }
+
+    await api("/api/stories", {
+      method: "POST",
+      body: form
+    });
+
+    $("storyText").value = "";
+    $("storyPreview").textContent = "";
+
+    selectedStoryFile = null;
+
+    $("storyModal").classList.add("hidden");
+
+    await loadStories();
+    await loadStoriesFull();
+
+    toast("Story publiée.");
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+async function loadConversations() {
+  try {
+    const conversations =
+      await api(
+        "/api/messages/conversations"
+      );
+
+    const container =
+      $("conversations");
+
+    container.innerHTML = "";
+
+    if (!conversations.length) {
+      container.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">▣</div>
+          <h3>Aucune discussion</h3>
+          <p>Recherche quelqu'un pour commencer.</p>
+        </div>
+      `;
+      return;
+    }
+
+    for (const conversation of conversations) {
+      const username =
+        conversation.username;
+
+      const user =
+        await api(
+          "/api/users/" +
+          encodeURIComponent(username)
+        ).catch(() => ({
+          username
+        }));
+
+      container.insertAdjacentHTML(
+        "beforeend",
+        `
+          <button
+            class="conversation"
+            onclick="openPrivate('${escapeHtml(username)}')"
+          >
+
+            <div class="avatar">
+              ${avatarHtml(username, user.avatar)}
+            </div>
+
+            <div class="conversation-body">
+
+              <div class="conversation-top">
+
+                <strong>
+                  @${escapeHtml(username)}
+                </strong>
+
+                <span>
+                  ${formatDate(conversation.createdAt)}
+                </span>
+
+              </div>
+
+              <p>
+                ${escapeHtml(
+                  conversation.lastMessage?.text ||
+                  "📎 Fichier"
+                )}
+              </p>
+
+            </div>
+
+            ${
+              presenceUsers.includes(username)
+                ? `<span class="online-dot"></span>`
+                : ""
+            }
+
+          </button>
+        `
+      );
+    }
+
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+window.openPrivate = async username => {
+  currentPrivateUser = username;
+
+  $("conversationView").classList.add("hidden");
+  $("privateChat").classList.remove("hidden");
+
+  $("privateName").textContent =
+    "@" + username;
+
+  $("privateAvatar").textContent =
+    username.charAt(0).toUpperCase();
+
+  updatePrivateStatus();
+
+  const messages =
+    await api(
+      "/api/messages/" +
+      encodeURIComponent(username)
+    );
+
+  $("privateMessages").innerHTML = "";
+
+  messages.forEach(message => {
+    appendMessage(
+      $("privateMessages"),
+      message
+    );
+  });
+
+  $("privateMessages").scrollTop =
+    $("privateMessages").scrollHeight;
+
+  $("privateInput").focus();
+};
+
+function updatePrivateStatus() {
+  if (!currentPrivateUser) return;
+
+  const online =
+    presenceUsers.includes(
+      currentPrivateUser
+    );
+
+  $("privateStatus").textContent =
+    online ? "en ligne" : "hors ligne";
+
+  $("privateStatus").className =
+    online ? "online-text" : "";
+}
+
+async function sendPrivate() {
+  if (!currentPrivateUser) return;
+
+  const input = $("privateInput");
+
+  const text = input.value.trim();
+
+  const file =
+    $("privateFile").files[0];
+
+  if (!text && !file) return;
+
+  try {
+    let attachment = null;
+
+    if (file) {
+      const form = new FormData();
+
+      form.append("file", file);
+
+      const uploaded =
+        await api("/api/upload", {
+          method: "POST",
+          body: form
+        });
+
+      attachment = uploaded.file;
+    }
+
+    socket.emit("privateMessage", {
+      to: currentPrivateUser,
+      text,
+      attachment
+    });
+
+    input.value = "";
+    $("privateFile").value = "";
+
+    socket.emit("typing", {
+      to: currentPrivateUser,
+      active: false
+    });
+
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+async function loadPublic() {
+  try {
+    const messages =
+      await api("/api/messages/public");
+
+    $("publicMessages").innerHTML = "";
+
+    messages.forEach(message => {
+      appendMessage(
+        $("publicMessages"),
+        message
+      );
+    });
+
+    $("publicMessages").scrollTop =
+      $("publicMessages").scrollHeight;
+
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+async function sendPublic() {
+  const input = $("publicInput");
+
+  const text = input.value.trim();
+
+  const file =
+    $("publicFile").files[0];
+
+  if (!text && !file) return;
+
+  try {
+    let attachment = null;
+
+    if (file) {
+      const form = new FormData();
+
+      form.append("file", file);
+
+      const uploaded =
+        await api("/api/upload", {
+          method: "POST",
+          body: form
+        });
+
+      attachment = uploaded.file;
+    }
+
+    socket.emit("publicMessage", {
+      text,
+      attachment
+    });
+
+    input.value = "";
+    $("publicFile").value = "";
+
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+function appendMessage(container, message) {
+  const mine =
+    message.from === me.username;
+
+  const row =
+    document.createElement("div");
+
+  row.className =
+    "message-row " +
+    (mine ? "mine" : "");
+
+  row.innerHTML = `
+    <div class="message-author">
+      @${escapeHtml(message.from)}
+    </div>
+
+    <div class="message-bubble">
+
+      ${
+        message.text
+          ? `
+            <div class="message-text">
+              ${escapeHtml(message.text)}
+            </div>
+          `
+          : ""
+      }
+
+      ${
+        message.attachment
+          ? attachmentHtml(
+              message.attachment
+            )
+          : ""
+      }
+
+      <div class="message-time">
+        ${formatDate(message.createdAt)}
+      </div>
+
+    </div>
+  `;
+
+  container.appendChild(row);
+}
+
+function attachmentHtml(file) {
+  const image =
+    file.type &&
+    file.type.startsWith("image/");
+
+  if (image) {
+    return `
+      <a
+        class="attachment-image"
+        href="${escapeHtml(file.url)}"
+        target="_blank"
+      >
+        <img
+          src="${escapeHtml(file.url)}"
+          alt="${escapeHtml(file.name)}"
+        >
+      </a>
+    `;
+  }
+
+  return `
+    <a
+      class="attachment-file"
+      href="${escapeHtml(file.url)}"
+      target="_blank"
+    >
+      📎 ${escapeHtml(file.name)}
+    </a>
+  `;
+}
+
+async function searchChatUsers() {
+  const q =
+    $("chatSearch").value.trim();
+
+  if (!q) {
+    $("chatSearchResults").innerHTML = "";
+    return;
+  }
+
+  try {
+    const users =
+      await api(
+        "/api/users/search?q=" +
+        encodeURIComponent(q)
+      );
+
+    $("chatSearchResults").innerHTML =
+      users.map(user => `
+        <button
+          class="user-result"
+          onclick="openPrivate('${escapeHtml(user.username)}')"
+        >
+
+          <div class="avatar">
+            ${avatarHtml(user.username, user.avatar)}
+          </div>
+
+          <div>
+            <strong>
+              @${escapeHtml(user.username)}
+            </strong>
+            <span>
+              ${user.bio
+                ? escapeHtml(user.bio)
+                : "Utilisateur Veyra"}
+            </span>
+          </div>
+
+        </button>
+      `).join("");
+
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+async function searchGlobal() {
+  const q =
+    $("globalSearch").value.trim();
+
+  if (!q) {
+    $("globalResults").innerHTML = "";
+    return;
+  }
+
+  try {
+    const users =
+      await api(
+        "/api/users/search?q=" +
+        encodeURIComponent(q)
+      );
+
+    $("globalResults").innerHTML =
+      users.map(user => `
+        <button
+          class="user-result big"
+          onclick="openUserProfile('${escapeHtml(user.username)}')"
+        >
+
+          <div class="avatar">
+            ${avatarHtml(user.username, user.avatar)}
+          </div>
+
+          <div>
+            <strong>
+              @${escapeHtml(user.username)}
+            </strong>
+            <span>
+              ${escapeHtml(
+                user.bio || "Profil Veyra"
+              )}
+            </span>
+          </div>
+
+        </button>
+      `).join("");
+
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+window.openUserProfile = async username => {
+  try {
+    const user =
+      await api(
+        "/api/users/" +
+        encodeURIComponent(username)
+      );
+
+    $("profile").innerHTML =
+      profileHtml(user, true);
+
+    showPage("profile");
+
+  } catch (error) {
+    toast(error.message);
+  }
+};
+
+async function loadProfile() {
+  $("profile").innerHTML =
+    profileHtml(me, false);
+}
+
+function profileHtml(user, other) {
+  const following =
+    Array.isArray(me.following) &&
+    me.following.includes(
+      user.username
+    );
+
+  return `
+    <div class="profile-cover">
+
+      <div class="profile-avatar">
+        ${avatarHtml(user.username, user.avatar)}
+      </div>
+
+    </div>
+
+    <div class="profile-content">
+
+      <div class="profile-title">
+
+        <div>
+
+          <h1>
+            @${escapeHtml(user.username)}
+          </h1>
+
+          <p>
+            ${escapeHtml(
+              user.bio || "Bienvenue sur Veyra."
+            )}
+          </p>
+
+        </div>
+
+        ${
+          other
+            ? `
+              <button
+                class="primary-small"
+                onclick="followUser('${escapeHtml(user.username)}')"
+              >
+                ${following ? "Suivi" : "Suivre"}
+              </button>
+            `
+            : `
+              <button
+                class="primary-small"
+                onclick="logout()"
+              >
+                Déconnexion
+              </button>
+            `
+        }
+
+      </div>
+
+      <div class="profile-stats">
+
+        <div>
+          <strong>
+            ${user.followers?.length || 0}
+          </strong>
+          <span>abonnés</span>
+        </div>
+
+        <div>
+          <strong>
+            ${user.following?.length || 0}
+          </strong>
+          <span>abonnements</span>
+        </div>
+
+      </div>
+
+      ${
+        other
+          ? `
+            <button
+              class="secondary-button"
+              onclick="openPrivate('${escapeHtml(user.username)}')"
+            >
+              💬 Discuter
+            </button>
+          `
+          : ""
+      }
+
+    </div>
+  `;
+}
+
+window.followUser = async username => {
+  try {
+    const result =
+      await api(
+        "/api/users/" +
+        encodeURIComponent(username) +
+        "/follow",
+        {
+          method: "POST"
+        }
+      );
+
+    toast(
+      result.following
+        ? "Tu suis maintenant @" + username
+        : "Tu ne suis plus @" + username
+    );
+
+    if (result.user) {
+      $("profile").innerHTML =
+        profileHtml(result.user, true);
+    }
+
+  } catch (error) {
+    toast(error.message);
+  }
+};
+
+window.logout = async () => {
+  await api("/api/auth/logout", {
+    method: "POST"
+  });
+
+  location.href = "/login.html";
+};
+
+init();
+
+// ===== Veyra : suppression des stories =====
+
+async function deleteStory(storyId) {
+  if (!storyId) return;
+
+  const confirmed = confirm("Supprimer cette story ?");
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(`/api/stories/${encodeURIComponent(storyId)}`, {
+      method: "DELETE"
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.error || "Impossible de supprimer la story.");
+    }
+
+    if (typeof showToast === "function") {
+      showToast("Story supprimée");
+    }
+
+    // Fermer une éventuelle fenêtre de story
+    document.querySelectorAll(".story-viewer, .story-modal, [data-story-viewer]")
+      .forEach(el => el.remove());
+
+    // Recharger les stories
+    if (typeof loadStories === "function") {
+      await loadStories();
+    } else if (typeof loadHome === "function") {
+      await loadHome();
+    } else {
+      location.reload();
+    }
+
+  } catch (error) {
+    console.error(error);
+
+    if (typeof showToast === "function") {
+      showToast(error.message || "Erreur lors de la suppression.");
+    } else {
+      alert(error.message || "Erreur lors de la suppression.");
+    }
+  }
+}

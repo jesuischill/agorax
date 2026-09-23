@@ -1,0 +1,38 @@
+[
+  {
+    "id": "mubl4j5cf4b037793c",
+    "username": "pipi",
+    "read": false,
+    "createdAt": "2026-09-21T18:34:51.505Z",
+    "type": "message",
+    "from": "mohaDZ",
+    "text": "Nouveau message de mohaDZ."
+  },
+  {
+    "id": "mubl4eph7c5169856b",
+    "username": "mohaDZ",
+    "read": false,
+    "createdAt": "2026-09-21T18:34:45.749Z",
+    "type": "message",
+    "from": "pipi",
+    "text": "Nouveau message de pipi."
+  },
+  {
+    "id": "mubl45ri0f3f55cbd9",
+    "username": "pipi",
+    "read": false,
+    "createdAt": "2026-09-21T18:34:34.158Z",
+    "type": "message",
+    "from": "mohaDZ",
+    "text": "Nouveau message de mohaDZ."
+  },
+  {
+    "id": "mubl3s3i5a2b130a07",
+    "username": "mohaDZ",
+    "read": false,
+    "createdAt": "2026-09-21T18:34:16.446Z",
+    "type": "message",
+    "from": "pipi",
+    "text": "Nouveau message de pipi."
+  }
+]

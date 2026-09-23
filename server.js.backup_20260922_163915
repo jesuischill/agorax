@@ -1,0 +1,951 @@
+const express = require("express");
+const session = require("express-session");
+const bcrypt = require("bcryptjs");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const http = require("http");
+const { Server } = require("socket.io");
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+const PORT = 3000;
+const ROOT = __dirname;
+const DATA = path.join(ROOT, "data");
+const PUBLIC = path.join(ROOT, "public");
+const UPLOADS = path.join(ROOT, "uploads");
+
+for (const dir of [DATA, PUBLIC, UPLOADS]) {
+  fs.mkdirSync(dir, { recursive: true });
+}
+
+const FILES = {
+  users: path.join(DATA, "users.json"),
+  messages: path.join(DATA, "messages.json"),
+  posts: path.join(DATA, "posts.json"),
+  stories: path.join(DATA, "stories.json"),
+  rooms: path.join(DATA, "rooms.json"),
+  notifications: path.join(DATA, "notifications.json")
+};
+
+for (const file of Object.values(FILES)) {
+  if (!fs.existsSync(file)) fs.writeFileSync(file, "[]");
+}
+
+function read(file) {
+  try {
+    const value = JSON.parse(fs.readFileSync(file, "utf8"));
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
+}
+
+function write(file, value) {
+  fs.writeFileSync(file, JSON.stringify(value, null, 2));
+}
+
+function safeUser(user) {
+  if (!user) return null;
+
+  return {
+    username: user.username,
+    email: user.email,
+    age: user.age,
+    bio: user.bio || "",
+    avatar: user.avatar || "",
+    banner: user.banner || "",
+    followers: Array.isArray(user.followers) ? user.followers : [],
+    following: Array.isArray(user.following) ? user.following : [],
+    createdAt: user.createdAt
+  };
+}
+
+function getUser(req) {
+  if (!req.session?.username) return null;
+
+  return read(FILES.users).find(
+    u => u.username === req.session.username
+  );
+}
+
+function auth(req, res, next) {
+  const user = getUser(req);
+
+  if (!user) {
+    return res.status(401).json({
+      error: "Non connecté."
+    });
+  }
+
+  req.user = user;
+  next();
+}
+
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+const sessionMiddleware = session({
+  secret: "veyra-session-secret",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 * 30,
+    httpOnly: true,
+    sameSite: "lax"
+  }
+});
+
+app.use(sessionMiddleware);
+
+app.use("/uploads", express.static(UPLOADS));
+app.use(express.static(PUBLIC));
+
+const storage = multer.diskStorage({
+  destination: (_, __, cb) => cb(null, UPLOADS),
+  filename: (_, file, cb) => {
+    const ext = path.extname(file.originalname || "").toLowerCase();
+
+    const name =
+      Date.now() +
+      "-" +
+      Math.random().toString(36).slice(2, 10) +
+      ext;
+
+    cb(null, name);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 20 * 1024 * 1024
+  }
+});
+
+/* =========================
+   AUTH
+========================= */
+
+app.get("/api/auth/me", (req, res) => {
+  const user = getUser(req);
+
+  res.json({
+    authenticated: !!user,
+    user: safeUser(user)
+  });
+});
+
+app.post("/api/auth/register", (req, res) => {
+  const users = read(FILES.users);
+
+  const username = String(req.body.username || "").trim();
+  const email = String(req.body.email || "").trim().toLowerCase();
+  const password = String(req.body.password || "");
+  const age = Number(req.body.age);
+
+  if (!/^[a-zA-Z0-9_.-]{3,24}$/.test(username)) {
+    return res.status(400).json({
+      error: "Le pseudo doit contenir 3 à 24 caractères."
+    });
+  }
+
+  if (!email.includes("@")) {
+    return res.status(400).json({
+      error: "Email invalide."
+    });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({
+      error: "Le mot de passe doit contenir au moins 6 caractères."
+    });
+  }
+
+  if (!Number.isInteger(age) || age < 13 || age > 120) {
+    return res.status(400).json({
+      error: "Âge invalide."
+    });
+  }
+
+  if (
+    users.some(
+      u => String(u.username).toLowerCase() === username.toLowerCase()
+    )
+  ) {
+    return res.status(409).json({
+      error: "Ce pseudo est déjà utilisé."
+    });
+  }
+
+  if (
+    users.some(
+      u => String(u.email).toLowerCase() === email
+    )
+  ) {
+    return res.status(409).json({
+      error: "Cet email est déjà utilisé."
+    });
+  }
+
+  const user = {
+    username,
+    email,
+    age,
+    passwordHash: bcrypt.hashSync(password, 12),
+    bio: "",
+    avatar: "",
+    banner: "",
+    followers: [],
+    following: [],
+    createdAt: new Date().toISOString()
+  };
+
+  users.push(user);
+  write(FILES.users, users);
+
+  req.session.username = username;
+
+  req.session.save(() => {
+    res.json({
+      ok: true,
+      user: safeUser(user)
+    });
+  });
+});
+
+app.post("/api/auth/login", (req, res) => {
+  const users = read(FILES.users);
+
+  const identifier = String(
+    req.body.identifier ||
+    req.body.username ||
+    req.body.email ||
+    ""
+  ).trim();
+
+  const password = String(req.body.password || "");
+
+  const user = users.find(u =>
+    String(u.username).toLowerCase() === identifier.toLowerCase() ||
+    String(u.email).toLowerCase() === identifier.toLowerCase()
+  );
+
+  if (
+    !user ||
+    !user.passwordHash ||
+    !bcrypt.compareSync(password, user.passwordHash)
+  ) {
+    return res.status(401).json({
+      error: "Identifiants incorrects."
+    });
+  }
+
+  req.session.username = user.username;
+
+  req.session.save(() => {
+    res.json({
+      ok: true,
+      user: safeUser(user)
+    });
+  });
+});
+
+app.post("/api/auth/logout", (req, res) => {
+  req.session.destroy(() => {
+    res.json({ ok: true });
+  });
+});
+
+/* =========================
+   UPLOAD
+========================= */
+
+app.post(
+  "/api/upload",
+  auth,
+  upload.single("file"),
+  (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({
+        error: "Aucun fichier reçu."
+      });
+    }
+
+    res.json({
+      ok: true,
+      file: {
+        name: req.file.originalname,
+        url: "/uploads/" + req.file.filename,
+        type: req.file.mimetype,
+        size: req.file.size
+      }
+    });
+  }
+);
+
+/* =========================
+   USERS
+========================= */
+
+app.get("/api/users/search", auth, (req, res) => {
+  const q = String(req.query.q || "")
+    .trim()
+    .toLowerCase();
+
+  if (!q) return res.json([]);
+
+  const users = read(FILES.users)
+    .filter(u =>
+      String(u.username).toLowerCase().includes(q)
+    )
+    .slice(0, 30)
+    .map(safeUser);
+
+  res.json(users);
+});
+
+app.get("/api/users/:username", auth, (req, res) => {
+  const users = read(FILES.users);
+
+  const user = users.find(
+    u =>
+      String(u.username).toLowerCase() ===
+      String(req.params.username).toLowerCase()
+  );
+
+  if (!user) {
+    return res.status(404).json({
+      error: "Utilisateur introuvable."
+    });
+  }
+
+  res.json(safeUser(user));
+});
+
+app.post("/api/users/:username/follow", auth, (req, res) => {
+  const users = read(FILES.users);
+
+  const me = users.find(
+    u => u.username === req.user.username
+  );
+
+  const target = users.find(
+    u =>
+      String(u.username).toLowerCase() ===
+      String(req.params.username).toLowerCase()
+  );
+
+  if (!me || !target) {
+    return res.status(404).json({
+      error: "Utilisateur introuvable."
+    });
+  }
+
+  if (me.username === target.username) {
+    return res.status(400).json({
+      error: "Impossible de se suivre soi-même."
+    });
+  }
+
+  me.following = Array.isArray(me.following)
+    ? me.following
+    : [];
+
+  target.followers = Array.isArray(target.followers)
+    ? target.followers
+    : [];
+
+  const exists = me.following.includes(target.username);
+
+  if (exists) {
+    me.following = me.following.filter(
+      x => x !== target.username
+    );
+
+    target.followers = target.followers.filter(
+      x => x !== me.username
+    );
+  } else {
+    me.following.push(target.username);
+
+    if (!target.followers.includes(me.username)) {
+      target.followers.push(me.username);
+    }
+  }
+
+  write(FILES.users, users);
+
+  res.json({
+    following: !exists,
+    user: safeUser(target)
+  });
+});
+
+/* =========================
+   POSTS
+========================= */
+
+app.get("/api/posts", auth, (req, res) => {
+  const posts = read(FILES.posts)
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt) -
+        new Date(a.createdAt)
+    );
+
+  res.json(posts.slice(0, 200));
+});
+
+app.post(
+  "/api/posts",
+  auth,
+  upload.single("attachment"),
+  (req, res) => {
+    const text = String(req.body.text || "").trim();
+
+    let attachment = null;
+
+    if (req.file) {
+      attachment = {
+        name: req.file.originalname,
+        url: "/uploads/" + req.file.filename,
+        type: req.file.mimetype,
+        size: req.file.size
+      };
+    }
+
+    if (!text && !attachment) {
+      return res.status(400).json({
+        error: "Publication vide."
+      });
+    }
+
+    const posts = read(FILES.posts);
+
+    const post = {
+      id:
+        Date.now().toString(36) +
+        Math.random().toString(36).slice(2, 7),
+      from: req.user.username,
+      text,
+      attachment,
+      likes: [],
+      comments: [],
+      createdAt: new Date().toISOString()
+    };
+
+    posts.push(post);
+
+    write(FILES.posts, posts);
+
+    res.json(post);
+  }
+);
+
+app.post("/api/posts/:id/like", auth, (req, res) => {
+  const posts = read(FILES.posts);
+
+  const post = posts.find(
+    p => p.id === req.params.id
+  );
+
+  if (!post) {
+    return res.status(404).json({
+      error: "Publication introuvable."
+    });
+  }
+
+  post.likes = Array.isArray(post.likes)
+    ? post.likes
+    : [];
+
+  const index = post.likes.indexOf(
+    req.user.username
+  );
+
+  if (index >= 0) {
+    post.likes.splice(index, 1);
+  } else {
+    post.likes.push(req.user.username);
+  }
+
+  write(FILES.posts, posts);
+
+  res.json({
+    likes: post.likes.length,
+    liked: post.likes.includes(req.user.username)
+  });
+});
+
+app.post("/api/posts/:id/comments", auth, (req, res) => {
+  const posts = read(FILES.posts);
+
+  const post = posts.find(
+    p => p.id === req.params.id
+  );
+
+  if (!post) {
+    return res.status(404).json({
+      error: "Publication introuvable."
+    });
+  }
+
+  const text = String(req.body.text || "").trim();
+
+  if (!text) {
+    return res.status(400).json({
+      error: "Commentaire vide."
+    });
+  }
+
+  post.comments = Array.isArray(post.comments)
+    ? post.comments
+    : [];
+
+  const comment = {
+    id: Date.now().toString(36),
+    from: req.user.username,
+    text,
+    createdAt: new Date().toISOString()
+  };
+
+  post.comments.push(comment);
+
+  write(FILES.posts, posts);
+
+  res.json(comment);
+});
+
+/* =========================
+   STORIES
+========================= */
+
+app.get("/api/stories", auth, (req, res) => {
+  const stories = read(FILES.stories);
+
+  const cutoff =
+    Date.now() - 24 * 60 * 60 * 1000;
+
+  const active = stories
+    .filter(
+      s =>
+        new Date(s.createdAt).getTime() >
+        cutoff
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt) -
+        new Date(a.createdAt)
+    );
+
+  write(FILES.stories, active);
+
+  res.json(active);
+});
+
+app.post(
+  "/api/stories",
+  auth,
+  upload.single("attachment"),
+  (req, res) => {
+    const text = String(req.body.text || "").trim();
+
+    let attachment = null;
+
+    if (req.file) {
+      attachment = {
+        name: req.file.originalname,
+        url: "/uploads/" + req.file.filename,
+        type: req.file.mimetype,
+        size: req.file.size
+      };
+    }
+
+    if (!text && !attachment) {
+      return res.status(400).json({
+        error: "Story vide."
+      });
+    }
+
+    const stories = read(FILES.stories);
+
+    const story = {
+      id:
+        Date.now().toString(36) +
+        Math.random().toString(36).slice(2, 7),
+      from: req.user.username,
+      text,
+      attachment,
+      createdAt: new Date().toISOString()
+    };
+
+    stories.push(story);
+
+    write(FILES.stories, stories);
+
+    res.json(story);
+  }
+);
+
+/* =========================
+   PRIVATE MESSAGES
+========================= */
+
+app.get(
+  "/api/messages/:username",
+  auth,
+  (req, res) => {
+    const username = req.params.username;
+
+    const messages = read(FILES.messages)
+      .filter(m =>
+        m.type === "private" &&
+        (
+          (
+            m.from === req.user.username &&
+            m.to === username
+          ) ||
+          (
+            m.from === username &&
+            m.to === req.user.username
+          )
+        )
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt) -
+          new Date(b.createdAt)
+      );
+
+    res.json(messages.slice(-500));
+  }
+);
+
+app.get(
+  "/api/messages/conversations",
+  auth,
+  (req, res) => {
+    const messages = read(FILES.messages);
+
+    const map = new Map();
+
+    for (const m of messages) {
+      if (m.type !== "private") continue;
+
+      if (
+        m.from !== req.user.username &&
+        m.to !== req.user.username
+      ) {
+        continue;
+      }
+
+      const other =
+        m.from === req.user.username
+          ? m.to
+          : m.from;
+
+      const old = map.get(other);
+
+      if (
+        !old ||
+        new Date(m.createdAt) >
+          new Date(old.createdAt)
+      ) {
+        map.set(other, m);
+      }
+    }
+
+    const result = [...map.entries()]
+      .map(([username, message]) => ({
+        username,
+        lastMessage: message,
+        createdAt: message.createdAt
+      }))
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt) -
+          new Date(a.createdAt)
+      );
+
+    res.json(result);
+  }
+);
+
+/* =========================
+   PUBLIC CHAT
+========================= */
+
+app.get("/api/messages/public", auth, (req, res) => {
+  const messages = read(FILES.messages)
+    .filter(m => m.type === "public")
+    .sort(
+      (a, b) =>
+        new Date(a.createdAt) -
+        new Date(b.createdAt)
+    );
+
+  res.json(messages.slice(-500));
+});
+
+/* =========================
+   ROOMS
+========================= */
+
+app.get("/api/rooms", auth, (req, res) => {
+  res.json(read(FILES.rooms));
+});
+
+app.post("/api/rooms", auth, (req, res) => {
+  const name = String(req.body.name || "").trim();
+
+  if (!name) {
+    return res.status(400).json({
+      error: "Nom du salon obligatoire."
+    });
+  }
+
+  const rooms = read(FILES.rooms);
+
+  const room = {
+    id:
+      Date.now().toString(36) +
+      Math.random().toString(36).slice(2, 6),
+    name,
+    description:
+      String(req.body.description || "").trim(),
+    icon: "💬",
+    createdAt: new Date().toISOString()
+  };
+
+  rooms.push(room);
+
+  write(FILES.rooms, rooms);
+
+  res.json(room);
+});
+
+app.get(
+  "/api/messages/room/:roomId",
+  auth,
+  (req, res) => {
+    const messages = read(FILES.messages)
+      .filter(
+        m =>
+          m.type === "room" &&
+          m.roomId === req.params.roomId
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt) -
+          new Date(b.createdAt)
+      );
+
+    res.json(messages.slice(-500));
+  }
+);
+
+/* =========================
+   SOCKET.IO
+========================= */
+
+io.use((socket, next) => {
+  sessionMiddleware(
+    socket.request,
+    {},
+    next
+  );
+});
+
+const connectedUsers = new Map();
+
+function broadcastPresence() {
+  io.emit(
+    "presence",
+    [...connectedUsers.keys()]
+  );
+}
+
+io.on("connection", socket => {
+  const username =
+    socket.request.session?.username;
+
+  if (!username) {
+    socket.disconnect(true);
+    return;
+  }
+
+  socket.join("user:" + username);
+
+  connectedUsers.set(
+    username,
+    (connectedUsers.get(username) || 0) + 1
+  );
+
+  broadcastPresence();
+
+  socket.on("joinPublic", () => {
+    socket.join("public");
+  });
+
+  socket.on("joinRoom", roomId => {
+    if (typeof roomId !== "string") return;
+
+    socket.join("room:" + roomId);
+  });
+
+  socket.on("privateMessage", data => {
+    const to = String(data?.to || "").trim();
+    const text = String(data?.text || "").trim();
+    const attachment = data?.attachment || null;
+
+    if (!to || (!text && !attachment)) return;
+
+    const users = read(FILES.users);
+
+    const target = users.find(
+      u => u.username === to
+    );
+
+    if (!target) return;
+
+    const message = {
+      id:
+        Date.now().toString(36) +
+        Math.random().toString(36).slice(2, 8),
+      type: "private",
+      from: username,
+      to,
+      text,
+      attachment,
+      createdAt: new Date().toISOString()
+    };
+
+    const messages = read(FILES.messages);
+
+    messages.push(message);
+
+    /*
+      IMPORTANT :
+      Les messages restent dans data/messages.json.
+      On ne limite plus à 5000.
+    */
+    write(FILES.messages, messages);
+
+    io.to("user:" + username)
+      .emit("privateMessage", message);
+
+    io.to("user:" + to)
+      .emit("privateMessage", message);
+  });
+
+  socket.on("publicMessage", data => {
+    const text = String(data?.text || "").trim();
+    const attachment = data?.attachment || null;
+
+    if (!text && !attachment) return;
+
+    const message = {
+      id:
+        Date.now().toString(36) +
+        Math.random().toString(36).slice(2, 8),
+      type: "public",
+      from: username,
+      text,
+      attachment,
+      createdAt: new Date().toISOString()
+    };
+
+    const messages = read(FILES.messages);
+
+    messages.push(message);
+
+    write(FILES.messages, messages);
+
+    io.to("public")
+      .emit("publicMessage", message);
+  });
+
+  socket.on("roomMessage", data => {
+    const roomId = String(data?.roomId || "");
+    const text = String(data?.text || "").trim();
+    const attachment = data?.attachment || null;
+
+    if (!roomId || (!text && !attachment)) return;
+
+    const rooms = read(FILES.rooms);
+
+    if (!rooms.some(r => r.id === roomId)) {
+      return;
+    }
+
+    const message = {
+      id:
+        Date.now().toString(36) +
+        Math.random().toString(36).slice(2, 8),
+      type: "room",
+      roomId,
+      from: username,
+      text,
+      attachment,
+      createdAt: new Date().toISOString()
+    };
+
+    const messages = read(FILES.messages);
+
+    messages.push(message);
+
+    write(FILES.messages, messages);
+
+    io.to("room:" + roomId)
+      .emit("roomMessage", message);
+  });
+
+  socket.on("typing", data => {
+    const to = String(data?.to || "").trim();
+
+    if (!to) return;
+
+    io.to("user:" + to).emit("typing", {
+      from: username,
+      active: !!data.active
+    });
+  });
+
+  socket.on("disconnect", () => {
+    const count =
+      connectedUsers.get(username) || 0;
+
+    if (count <= 1) {
+      connectedUsers.delete(username);
+    } else {
+      connectedUsers.set(
+        username,
+        count - 1
+      );
+    }
+
+    broadcastPresence();
+  });
+});
+
+/* =========================
+   FALLBACK
+========================= */
+
+app.get("*", (req, res) => {
+  res.sendFile(
+    path.join(PUBLIC, "index.html")
+  );
+});
+
+server.listen(PORT, () => {
+  console.log("");
+  console.log("==========================================");
+  console.log("             VEYRA EST EN LIGNE");
+  console.log("==========================================");
+  console.log("http://localhost:" + PORT);
+  console.log("");
+});

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AgoraX - espace public de discussion">
+  <title>AgoraX — Discussions publiques</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="logo">A</div>
+    <div class="eyebrow">ESPACE PUBLIC</div>
+    <h1>AgoraX</h1>
+    <p>Un nouvel espace pour discuter, découvrir et échanger.</p>
+
+    <label for="username">Votre pseudo</label>
+    <input id="username" maxlength="30" placeholder="Ex. Alex" autocomplete="off">
+
+    <button id="enterBtn">Entrer sur AgoraX →</button>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div>
+        <strong>AgoraX</strong>
+        <span>Communauté publique</span>
+      </div>
+    </div>
+
+    <div class="side-title">SALONS</div>
+    <nav id="rooms"></nav>
+
+    <div class="sidebar-bottom">
+      <div class="profile">
+        <div id="avatar" class="avatar">A</div>
+        <div>
+          <strong id="profileName">Utilisateur</strong>
+          <span>En ligne</span>
+        </div>
+        <span class="status"></span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <header class="topbar">
+      <div>
+        <div class="channel-title">
+          <span>#</span>
+          <h2 id="roomName">Général</h2>
+        </div>
+        <p>Discutez avec la communauté</p>
+      </div>
+
+      <div class="online-box">
+        <span class="online-dot"></span>
+        <strong id="online">0</strong>
+        <span>en ligne</span>
+      </div>
+    </header>
+
+    <section id="messages" class="messages"></section>
+
+    <form id="messageForm" class="composer">
+      <div class="emoji-wrapper">
+        <button type="button" id="emojiBtn" class="emoji-btn" title="Emojis">😊</button>
+        <div id="emojiPicker" class="emoji-picker hidden">
+          <button type="button">😀</button>
+          <button type="button">😃</button>
+          <button type="button">😄</button>
+          <button type="button">😁</button>
+          <button type="button">😆</button>
+          <button type="button">😅</button>
+          <button type="button">😂</button>
+          <button type="button">🤣</button>
+          <button type="button">😊</button>
+          <button type="button">😎</button>
+          <button type="button">😍</button>
+          <button type="button">🥰</button>
+          <button type="button">😘</button>
+          <button type="button">🤩</button>
+          <button type="button">🤔</button>
+          <button type="button">😮</button>
+          <button type="button">😢</button>
+          <button type="button">😭</button>
+          <button type="button">😡</button>
+          <button type="button">👍</button>
+          <button type="button">👎</button>
+          <button type="button">👏</button>
+          <button type="button">🔥</button>
+          <button type="button">❤️</button>
+          <button type="button">💯</button>
+          <button type="button">🎉</button>
+          <button type="button">🚀</button>
+          <button type="button">⭐</button>
+        </div>
+      </div>
+
+      <input
+        id="messageInput"
+        maxlength="500"
+        autocomplete="off"
+        placeholder="Écrire un message..."
+      >
+
+      <button type="submit">Envoyer</button>
+    </form>
+
+  </main>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

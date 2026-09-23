@@ -1,0 +1,55 @@
+[
+  {
+    "id": "mubkpoq8sqp3nx8",
+    "type": "public",
+    "from": "mohaDZ",
+    "text": "salut",
+    "createdAt": "2026-09-21T18:23:18.896Z"
+  },
+  {
+    "id": "mubl3s3g3189d4c4fd",
+    "type": "private",
+    "from": "pipi",
+    "to": "mohaDZ",
+    "text": "slt",
+    "attachment": {
+      "url": "/uploads/1790015656431-a262e372e2bb8f619f7f.png",
+      "name": "images (9).png",
+      "mime": "image/png",
+      "size": 18661
+    },
+    "createdAt": "2026-09-21T18:34:16.444Z"
+  },
+  {
+    "id": "mubl45rg4995c8e27a",
+    "type": "private",
+    "from": "mohaDZ",
+    "to": "pipi",
+    "text": "slt",
+    "attachment": null,
+    "createdAt": "2026-09-21T18:34:34.156Z"
+  },
+  {
+    "id": "mubl4epe59b1d20b49",
+    "type": "private",
+    "from": "pipi",
+    "to": "mohaDZ",
+    "text": "",
+    "attachment": {
+      "url": "/uploads/1790015685734-6f21ced67c05ed23655c.png",
+      "name": "images (9).png",
+      "mime": "image/png",
+      "size": 18661
+    },
+    "createdAt": "2026-09-21T18:34:45.746Z"
+  },
+  {
+    "id": "mubl4j5a550b5d75bf",
+    "type": "private",
+    "from": "mohaDZ",
+    "to": "pipi",
+    "text": "az",
+    "attachment": null,
+    "createdAt": "2026-09-21T18:34:51.502Z"
+  }
+]

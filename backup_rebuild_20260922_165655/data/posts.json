@@ -1,0 +1,32 @@
+[
+  {
+    "id": "mucs6wsv8cxj5",
+    "from": "mohaDZ",
+    "text": "slm",
+    "attachment": {
+      "name": "images (9).png",
+      "url": "/uploads/1790088025990-y97s1a3q.png",
+      "type": "image/png",
+      "size": 18661
+    },
+    "likes": [
+      "mohaDZ"
+    ],
+    "comments": [],
+    "createdAt": "2026-09-22T14:40:25.999Z"
+  },
+  {
+    "id": "mucsdn036ne96",
+    "from": "mohaDZ",
+    "text": "",
+    "attachment": {
+      "name": "f6d03206eeafa3f8d52fe791bfe60262.gif",
+      "url": "/uploads/1790088339876-s1sfibwh.gif",
+      "type": "image/gif",
+      "size": 646946
+    },
+    "likes": [],
+    "comments": [],
+    "createdAt": "2026-09-22T14:45:39.891Z"
+  }
+]

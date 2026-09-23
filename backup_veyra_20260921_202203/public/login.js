@@ -1,0 +1,80 @@
+const loginBox = document.getElementById("loginBox");
+const registerBox = document.getElementById("registerBox");
+const message = document.getElementById("message");
+
+function showMessage(text, ok = false) {
+  message.textContent = text;
+  message.style.color = ok ? "#8ff0b1" : "#ff9e9e";
+}
+
+document.getElementById("showRegister").onclick = () => {
+  loginBox.hidden = true;
+  registerBox.hidden = false;
+  showMessage("");
+};
+
+document.getElementById("showLogin").onclick = () => {
+  registerBox.hidden = true;
+  loginBox.hidden = false;
+  showMessage("");
+};
+
+document.getElementById("loginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  showMessage("Connexion...");
+
+  try {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        identifier: document.getElementById("loginIdentifier").value,
+        password: document.getElementById("loginPassword").value
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Connexion impossible.");
+    }
+
+    showMessage("Connexion réussie !", true);
+    window.location.replace("/");
+  } catch (error) {
+    showMessage(error.message);
+  }
+});
+
+document.getElementById("registerForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  showMessage("Création du compte...");
+
+  try {
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: document.getElementById("registerUsername").value,
+        email: document.getElementById("registerEmail").value,
+        password: document.getElementById("registerPassword").value,
+        age: document.getElementById("registerAge").value,
+        privacyAccepted: document.getElementById("privacyAccepted").checked
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Création du compte impossible.");
+    }
+
+    showMessage("Compte créé ! Bienvenue sur Agorex.", true);
+
+    setTimeout(() => {
+      window.location.replace("/");
+    }, 500);
+  } catch (error) {
+    showMessage(error.message);
+  }
+});

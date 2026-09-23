@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="AgoraX - réseau social public">
+<title>AgoraX — Réseau social</title>
+<link rel="stylesheet" href="style.css">
+
+<script id="agorex-auth-guard">
+(async function () {
+  try {
+    const response = await fetch("/api/auth/me", {
+      credentials: "same-origin"
+    });
+
+    if (!response.ok) {
+      window.location.replace("/login.html");
+    }
+  } catch {
+    window.location.replace("/login.html");
+  }
+})();
+</script>
+
+</head>
+
+<body>
+
+<div id="loginScreen">
+
+  <div class="login-box">
+
+    <div class="logo">A</div>
+
+    <div class="eyebrow">NOUVEAU RÉSEAU SOCIAL</div>
+
+    <h1>AgoraX</h1>
+
+    <p>
+      Publie ce que tu veux partager,
+      découvre la communauté et discute en direct.
+    </p>
+
+    <label for="username">Choisis ton pseudo</label>
+
+    <input
+      id="username"
+      maxlength="30"
+      placeholder="Ex. Alex"
+      autocomplete="off"
+    >
+
+    <button id="enterBtn">
+      Entrer sur AgoraX →
+    </button>
+
+  </div>
+
+</div>
+
+
+<div id="app" class="hidden">
+
+  <aside class="sidebar">
+
+    <div class="brand">
+
+      <div class="brand-mark">A</div>
+
+      <div>
+        <strong>AgoraX</strong>
+        <span>Réseau social</span>
+      </div>
+
+    </div>
+
+    <nav class="main-nav">
+
+      <button class="nav-btn active" data-page="home">
+        🏠 Accueil
+      </button>
+
+      <button class="nav-btn" data-page="profile">
+        👤 Mon profil
+      </button>
+
+      <button class="nav-btn" data-page="chat">
+        💬 Chat
+      </button>
+
+      <button class="nav-btn" data-page="notifications">
+        🔔 Notifications
+        <b id="notificationCount" class="notification-count hidden">0</b>
+      </button>
+
+    </nav>
+
+    <div class="sidebar-bottom">
+
+      <div class="profile-mini">
+
+        <div id="avatar" class="avatar">
+          A
+        </div>
+
+        <div>
+          <strong id="profileName">Utilisateur</strong>
+          <span>En ligne</span>
+        </div>
+
+      </div>
+
+    </div>
+
+  </aside>
+
+
+  <main class="main">
+
+    <header class="topbar">
+
+      <div>
+
+        <div class="page-title">
+          <h2 id="pageTitle">Accueil</h2>
+        </div>
+
+        <p id="pageSubtitle">
+          Découvrez les publications de la communauté
+        </p>
+
+      </div>
+
+      <div class="top-actions">
+
+        <input
+          id="searchInput"
+          placeholder="🔎 Rechercher..."
+          autocomplete="off"
+        >
+
+      </div>
+
+    </header>
+
+
+    <section id="homePage" class="page">
+
+      <div class="create-card">
+
+        <div class="create-head">
+
+          <div id="createAvatar" class="avatar">
+            A
+          </div>
+
+          <textarea
+            id="postContent"
+            maxlength="2000"
+            placeholder="Quoi de neuf ? Partage quelque chose..."
+          ></textarea>
+
+        </div>
+
+        <div id="imagePreview" class="image-preview hidden"></div>
+
+        <div class="create-actions">
+
+          <label class="image-button">
+            🖼️ Photo
+            <input
+              id="imageInput"
+              type="file"
+              accept="image/png,image/jpeg,image/gif,image/webp"
+              hidden
+            >
+          </label>
+
+          <span class="character-count">
+            <span id="charCount">0</span>/2000
+          </span>
+
+          <button id="publishBtn">
+            Publier
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <div id="feed"></div>
+
+    </section>
+
+
+    <section id="profilePage" class="page hidden">
+
+      <div class="profile-card">
+
+        <div id="profileCover" class="profile-cover">
+        </div>
+
+        <div class="profile-info">
+
+          <div class="profile-avatar-wrap">
+
+            <div id="bigAvatar" class="big-avatar">
+              A
+            </div>
+
+          </div>
+
+          <div class="profile-text">
+
+            <h1 id="profileUsername">
+              Utilisateur
+            </h1>
+
+            <p id="profileBio">
+              Bienvenue sur mon profil AgoraX 👋
+            </p>
+
+            <div class="profile-extra">
+
+              <span id="profileLocation"></span>
+
+              <a
+                id="profileLink"
+                href="#"
+                target="_blank"
+                rel="noopener"
+              ></a>
+
+            </div>
+
+            <span id="profileStats">
+              0 publication
+            </span>
+
+          </div>
+
+        </div>
+
+        <div class="profile-buttons">
+
+          <button id="editProfileBtn">
+            ✏️ Modifier le profil
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- MODIFICATION PROFIL -->
+
+      <div id="editProfileCard" class="edit-profile-card hidden">
+
+        <div class="edit-profile-header">
+
+          <div>
+            <h2>Modifier mon profil</h2>
+            <p>Personnalise ton espace AgoraX.</p>
+          </div>
+
+          <button id="closeEditProfile">
+            ✕
+          </button>
+
+        </div>
+
+
+        <form id="profileForm">
+
+          <div class="edit-images">
+
+            <label class="upload-box">
+
+              <div id="avatarPreview" class="avatar-preview">
+                A
+              </div>
+
+              <span>Changer la photo</span>
+
+              <input
+                id="avatarInput"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                hidden
+              >
+
+            </label>
+
+
+            <label class="cover-upload">
+
+              <div id="coverPreview" class="cover-preview">
+                <span>🖼️</span>
+              </div>
+
+              <span>Changer la couverture</span>
+
+              <input
+                id="coverInput"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                hidden
+              >
+
+            </label>
+
+          </div>
+
+
+          <label>
+            Nom affiché
+            <input
+              id="displayNameInput"
+              maxlength="40"
+              placeholder="Ton nom"
+            >
+          </label>
+
+
+          <label>
+            Bio
+            <textarea
+              id="bioInput"
+              maxlength="160"
+              placeholder="Présente-toi en quelques mots..."
+            ></textarea>
+
+            <small>
+              <span id="bioCount">0</span>/160
+            </small>
+          </label>
+
+
+          <label>
+            Lien
+            <input
+              id="linkInput"
+              maxlength="200"
+              placeholder="https://..."
+            >
+          </label>
+
+
+          <label>
+            Localisation
+            <input
+              id="locationInput"
+              maxlength="80"
+              placeholder="Paris, France"
+            >
+          </label>
+
+
+          <div class="edit-profile-actions">
+
+            <button
+              type="button"
+              id="cancelEditProfile"
+              class="secondary-btn"
+            >
+              Annuler
+            </button>
+
+            <button
+              type="submit"
+              id="saveProfileBtn"
+              class="primary-btn"
+            >
+              💾 Enregistrer
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+
+
+      <h3 class="section-title">
+        Publications
+      </h3>
+
+      <div id="profileFeed"></div>
+
+    </section>
+
+
+    <section id="chatPage" class="page hidden chat-page">
+
+      <div class="chat-layout">
+
+        <aside class="rooms">
+
+          <h3>Salons</h3>
+
+          <button class="room active" data-room="Général">
+            # Général
+          </button>
+
+          <button class="room" data-room="Actualités">
+            # Actualités
+          </button>
+
+          <button class="room" data-room="Jeux">
+            # Jeux
+          </button>
+
+          <button class="room" data-room="Technologie">
+            # Technologie
+          </button>
+
+          <button class="room" data-room="Musique">
+            # Musique
+          </button>
+
+        </aside>
+
+
+        <div class="chat-area">
+
+          <div class="chat-header">
+
+            <div>
+              <strong># <span id="roomName">Général</span></strong>
+              <small>
+                <span class="online-dot"></span>
+                <span id="online">0</span> en ligne
+              </small>
+            </div>
+
+          </div>
+
+          <div id="messages" class="messages"></div>
+
+
+          <form id="messageForm" class="composer">
+
+            <div class="emoji-wrapper">
+
+              <button
+                type="button"
+                id="emojiBtn"
+                class="emoji-btn"
+                title="Emojis"
+              >
+                😊
+              </button>
+
+              <div id="emojiPicker" class="emoji-picker hidden">
+
+                <button type="button">😀</button>
+                <button type="button">😃</button>
+                <button type="button">😄</button>
+                <button type="button">😁</button>
+                <button type="button">😂</button>
+                <button type="button">🤣</button>
+                <button type="button">😊</button>
+                <button type="button">😎</button>
+                <button type="button">😍</button>
+                <button type="button">🥰</button>
+                <button type="button">😘</button>
+                <button type="button">🤩</button>
+                <button type="button">🤔</button>
+                <button type="button">😮</button>
+                <button type="button">😢</button>
+                <button type="button">😭</button>
+                <button type="button">😡</button>
+                <button type="button">👍</button>
+                <button type="button">👎</button>
+                <button type="button">👏</button>
+                <button type="button">🔥</button>
+                <button type="button">❤️</button>
+                <button type="button">💯</button>
+                <button type="button">🎉</button>
+                <button type="button">🚀</button>
+                <button type="button">⭐</button>
+
+              </div>
+
+            </div>
+
+            <input
+              id="messageInput"
+              maxlength="500"
+              autocomplete="off"
+              placeholder="Écrire un message..."
+            >
+
+            <button type="submit">
+              Envoyer
+            </button>
+
+          </form>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <section id="notificationsPage" class="page hidden">
+
+      <div class="notifications-card">
+
+        <h2>🔔 Notifications</h2>
+
+        <div id="notifications">
+          <div class="empty">
+            Aucune notification pour le moment.
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+</div>
+
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

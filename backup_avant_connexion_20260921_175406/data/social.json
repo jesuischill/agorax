@@ -1,0 +1,28 @@
+{
+  "users": {
+    "chill": {
+      "username": "chill",
+      "bio": "Bienvenue sur mon profil AgoraX 👋",
+      "avatar": "C",
+      "createdAt": 1790005389577,
+      "displayName": "chill",
+      "link": "https://public agorexmoha",
+      "location": "paris",
+      "avatarImage": "/uploads/1790005735487-w6ijudm5xon.png"
+    },
+    "chil": {
+      "username": "chil",
+      "displayName": "chil",
+      "bio": "Bienvenue sur mon profil AgoraX 👋",
+      "link": "",
+      "location": "",
+      "avatar": "C",
+      "avatarImage": null,
+      "coverImage": null,
+      "createdAt": 1790005769107
+    }
+  },
+  "posts": [],
+  "comments": [],
+  "notifications": []
+}

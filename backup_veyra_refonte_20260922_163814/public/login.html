@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Veyra — Connexion</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/login.css">
+</head>
+<body>
+  <main class="auth">
+    <section class="auth-brand">
+      <div class="logo">V</div>
+      <h1>Veyra</h1>
+      <p>Connecte-toi, partage et discute avec ta communauté.</p>
+    </section>
+
+    <section class="auth-card">
+      <div id="loginView">
+        <h2>Bienvenue</h2>
+        <p class="muted">Connecte-toi à ton compte Veyra.</p>
+
+        <form id="loginForm">
+          <label>Pseudo ou email</label>
+          <input id="loginIdentifier" required autocomplete="username">
+
+          <label>Mot de passe</label>
+          <input id="loginPassword" type="password" required autocomplete="current-password">
+
+          <button>Se connecter</button>
+        </form>
+
+        <div id="loginError" class="error"></div>
+
+        <p class="switch">Pas encore de compte ? <button id="showRegister">Créer un compte</button></p>
+      </div>
+
+      <div id="registerView" class="hidden">
+        <h2>Créer ton compte</h2>
+        <p class="muted">Rejoins Veyra en quelques secondes.</p>
+
+        <form id="registerForm">
+          <label>Pseudo</label>
+          <input id="registerUsername" required minlength="3" autocomplete="username">
+
+          <label>Email</label>
+          <input id="registerEmail" type="email" required autocomplete="email">
+
+          <label>Âge</label>
+          <input id="registerAge" type="number" min="13" required>
+
+          <label>Mot de passe</label>
+          <input id="registerPassword" type="password" minlength="6" required autocomplete="new-password">
+
+          <label class="check">
+            <input id="privacy" type="checkbox" required>
+            <span>J'accepte les règles de confidentialité et les conditions d'utilisation.</span>
+          </label>
+
+          <button>Créer mon compte</button>
+        </form>
+
+        <div id="registerError" class="error"></div>
+
+        <p class="switch">Déjà un compte ? <button id="showLogin">Se connecter</button></p>
+      </div>
+    </section>
+  </main>
+  <script src="/login.js"></script>
+</body>
+</html>

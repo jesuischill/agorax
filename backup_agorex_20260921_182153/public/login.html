@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agorex — Connexion</title>
+  <link rel="stylesheet" href="/login.css">
+</head>
+<body>
+  <main class="auth-page">
+    <section class="auth-card">
+      <div class="logo">AGOREX</div>
+      <p class="subtitle">Ton espace social.</p>
+
+      <div id="loginBox">
+        <h1>Connexion</h1>
+
+        <form id="loginForm">
+          <label>Pseudo ou e-mail</label>
+          <input id="loginIdentifier" type="text" autocomplete="username" required>
+
+          <label>Mot de passe</label>
+          <input id="loginPassword" type="password" autocomplete="current-password" required>
+
+          <button type="submit">Se connecter</button>
+        </form>
+
+        <p class="switch">
+          Pas encore de compte ?
+          <button id="showRegister" class="link-button" type="button">Créer un compte</button>
+        </p>
+      </div>
+
+      <div id="registerBox" hidden>
+        <h1>Créer ton compte</h1>
+
+        <form id="registerForm">
+          <label>Pseudo</label>
+          <input id="registerUsername" type="text" minlength="3" maxlength="24" required>
+
+          <label>E-mail</label>
+          <input id="registerEmail" type="email" autocomplete="email" required>
+
+          <label>Mot de passe</label>
+          <input id="registerPassword" type="password" minlength="8" autocomplete="new-password" required>
+
+          <label>Âge</label>
+          <input id="registerAge" type="number" min="13" max="120" required>
+
+          <div class="privacy">
+            <strong>Règles de confidentialité</strong>
+            <p>
+              Agorex utilise les informations nécessaires à ton compte
+              pour permettre la connexion et le fonctionnement du service.
+              Ton mot de passe est stocké sous forme protégée.
+            </p>
+            <p>
+              Respecte les autres utilisateurs et ne partage pas
+              d'informations personnelles sensibles publiquement.
+            </p>
+
+            <label class="check">
+              <input id="privacyAccepted" type="checkbox" required>
+              <span>J'ai lu et j'accepte les règles de confidentialité.</span>
+            </label>
+          </div>
+
+          <button type="submit">Créer mon compte</button>
+        </form>
+
+        <p class="switch">
+          Déjà un compte ?
+          <button id="showLogin" class="link-button" type="button">Se connecter</button>
+        </p>
+      </div>
+
+      <div id="message"></div>
+    </section>
+  </main>
+
+  <script src="/login.js"></script>
+</body>
+</html>

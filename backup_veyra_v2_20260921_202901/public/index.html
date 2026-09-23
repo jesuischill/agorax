@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Veyra — Réseau social</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">V</div>
+        <div>
+          <strong>Veyra</strong>
+          <span>Connecte & partage</span>
+        </div>
+      </div>
+
+      <nav class="main-nav">
+        <button data-page="home" class="nav-item active"><span>⌂</span> Accueil</button>
+        <button data-page="stories" class="nav-item"><span>◉</span> Stories</button>
+        <button data-page="messages" class="nav-item"><span>◌</span> Messages</button>
+        <button data-page="public" class="nav-item"><span>◎</span> Chat public</button>
+        <button data-page="rooms" class="nav-item"><span>▦</span> Salons</button>
+        <button data-page="explore" class="nav-item"><span>⌕</span> Explorer</button>
+        <button data-page="notifications" class="nav-item"><span>♢</span> Notifications</button>
+        <button data-page="profile" class="nav-item"><span>○</span> Mon profil</button>
+      </nav>
+
+      <button id="createBtn" class="create-btn">＋ Créer</button>
+
+      <div class="sidebar-user" id="sidebarUser"></div>
+      <button id="logoutBtn" class="logout-btn">Se déconnecter</button>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <div class="mobile-brand">Veyra</div>
+          <div id="pageTitle">Accueil</div>
+        </div>
+        <div class="top-actions">
+          <button id="searchTop" class="icon-btn">⌕</button>
+          <button data-page="notifications" class="icon-btn">♢</button>
+          <button data-page="profile" class="avatar mini" id="topAvatar">V</button>
+        </div>
+      </header>
+
+      <section id="page-home" class="page active"></section>
+      <section id="page-stories" class="page"></section>
+      <section id="page-messages" class="page"></section>
+      <section id="page-public" class="page"></section>
+      <section id="page-rooms" class="page"></section>
+      <section id="page-explore" class="page"></section>
+      <section id="page-notifications" class="page"></section>
+      <section id="page-profile" class="page"></section>
+    </main>
+  </div>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <button id="modalClose" class="modal-close">×</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <nav class="mobile-nav">
+    <button data-page="home">⌂<span>Accueil</span></button>
+    <button data-page="messages">◌<span>Messages</span></button>
+    <button data-page="public">◎<span>Public</span></button>
+    <button data-page="rooms">▦<span>Salons</span></button>
+    <button data-page="profile">○<span>Profil</span></button>
+  </nav>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

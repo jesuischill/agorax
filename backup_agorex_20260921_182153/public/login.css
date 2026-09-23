@@ -1,0 +1,140 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  background:
+    radial-gradient(circle at top, #25304d 0, #101522 45%, #080b12 100%);
+  color: white;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 25px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 34px;
+  border-radius: 24px;
+  background: rgba(20, 25, 38, .96);
+  border: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 25px 80px rgba(0,0,0,.45);
+}
+
+.logo {
+  text-align: center;
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: 4px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #aeb7c9;
+  margin: 8px 0 30px;
+}
+
+h1 {
+  margin: 0 0 22px;
+  font-size: 26px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+label {
+  font-size: 14px;
+  color: #dce2ed;
+  margin-top: 8px;
+}
+
+input {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 12px;
+  border: 1px solid #343d52;
+  background: #0e1320;
+  color: white;
+  outline: none;
+  font-size: 15px;
+}
+
+input:focus {
+  border-color: #718cff;
+}
+
+button[type="submit"] {
+  margin-top: 16px;
+  padding: 14px;
+  border: 0;
+  border-radius: 12px;
+  background: #6c7cff;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button[type="submit"]:hover {
+  filter: brightness(1.08);
+}
+
+.switch {
+  text-align: center;
+  color: #9fa9bb;
+  margin-top: 22px;
+}
+
+.link-button {
+  border: 0;
+  background: none;
+  color: #8294ff;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.privacy {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #0d1220;
+  border: 1px solid #293248;
+  color: #aeb7c9;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.privacy strong {
+  color: white;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: white;
+}
+
+.check input {
+  width: auto;
+  margin-top: 3px;
+}
+
+#message {
+  min-height: 20px;
+  margin-top: 16px;
+  text-align: center;
+  color: #ff9e9e;
+  font-size: 14px;
+}

@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#11131a">
+  <title>Veyra</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+  <aside class="sidebar">
+
+    <div class="brand">
+      <div class="brand-mark">V</div>
+      <div>
+        <strong>Veyra</strong>
+        <span>social</span>
+      </div>
+    </div>
+
+    <div class="profile-mini" id="sidebarProfile">
+      <div class="avatar avatar-large" id="sidebarAvatar">V</div>
+      <div class="profile-mini-text">
+        <strong id="sidebarUsername">@...</strong>
+        <span>Voir mon profil</span>
+      </div>
+    </div>
+
+    <nav class="main-nav">
+
+      <button class="nav-item active" data-page="home">
+        <span class="nav-icon">⌂</span>
+        <span>Accueil</span>
+      </button>
+
+      <button class="nav-item" data-page="messages">
+        <span class="nav-icon">◌</span>
+        <span>Discuter</span>
+        <b class="nav-badge hidden" id="messageBadge">0</b>
+      </button>
+
+      <button class="nav-item" data-page="stories">
+        <span class="nav-icon">◉</span>
+        <span>Stories</span>
+      </button>
+
+      <button class="nav-item" data-page="posts">
+        <span class="nav-icon">▣</span>
+        <span>Publications</span>
+      </button>
+
+      <button class="nav-item" data-page="rooms">
+        <span class="nav-icon">#</span>
+        <span>Salons</span>
+      </button>
+
+      <button class="nav-item" data-page="profile">
+        <span class="nav-icon">♙</span>
+        <span>Mon profil</span>
+      </button>
+
+    </nav>
+
+    <div class="sidebar-bottom">
+
+      <button class="nav-item" id="logoutButton">
+        <span class="nav-icon">↪</span>
+        <span>Déconnexion</span>
+      </button>
+
+    </div>
+
+  </aside>
+
+
+  <main class="main">
+
+    <header class="topbar">
+
+      <div class="mobile-brand">
+        <div class="brand-mark">V</div>
+        <strong>Veyra</strong>
+      </div>
+
+      <div class="top-search">
+        <span>⌕</span>
+        <input id="globalSearch" placeholder="Rechercher sur Veyra...">
+      </div>
+
+      <div class="top-actions">
+        <button class="icon-button" id="notificationsButton" title="Notifications">♧</button>
+        <button class="icon-button" id="settingsButton" title="Paramètres">⚙</button>
+        <button class="top-avatar" id="topAvatar">V</button>
+      </div>
+
+    </header>
+
+
+    <div class="content">
+
+
+      <!-- ACCUEIL -->
+
+      <section class="page active" id="page-home">
+
+        <div class="page-heading">
+          <div>
+            <span class="eyebrow">TON ESPACE</span>
+            <h1>Accueil</h1>
+            <p>Retrouve tes amis, tes stories et les dernières publications.</p>
+          </div>
+        </div>
+
+        <section class="hero-card">
+
+          <div class="hero-glow"></div>
+
+          <div class="hero-content">
+            <span class="hero-label">BIENVENUE SUR VEYRA</span>
+            <h2>Connecte-toi.<br>Partage. Discute.</h2>
+            <p>Un espace pour tes conversations privées, tes stories et tes publications.</p>
+
+            <div class="hero-actions">
+              <button class="primary-button" data-page-jump="messages">Discuter</button>
+              <button class="secondary-button" data-page-jump="posts">Voir les publications</button>
+            </div>
+          </div>
+
+          <div class="hero-symbol">V</div>
+
+        </section>
+
+
+        <section class="section">
+
+          <div class="section-header">
+            <div>
+              <span class="eyebrow">EN CE MOMENT</span>
+              <h2>Stories</h2>
+            </div>
+
+            <button class="text-button" data-page-jump="stories">Tout voir →</button>
+          </div>
+
+          <div class="stories-row" id="homeStories"></div>
+
+        </section>
+
+
+        <section class="section">
+
+          <div class="section-header">
+            <div>
+              <span class="eyebrow">COMMUNAUTÉ</span>
+              <h2>Publications</h2>
+            </div>
+
+            <button class="text-button" data-page-jump="posts">Tout voir →</button>
+          </div>
+
+          <div class="feed" id="homePosts"></div>
+
+        </section>
+
+      </section>
+
+
+
+      <!-- DISCUTER -->
+
+      <section class="page" id="page-messages">
+
+        <div class="page-heading compact">
+          <div>
+            <span class="eyebrow">MESSAGERIE</span>
+            <h1>Discuter</h1>
+            <p>Conversations privées avec tes contacts.</p>
+          </div>
+
+          <button class="primary-button small" id="newConversationButton">＋ Nouvelle discussion</button>
+        </div>
+
+        <div class="messenger">
+
+          <aside class="conversation-panel">
+
+            <div class="conversation-search">
+              <span>⌕</span>
+              <input id="messageSearch" placeholder="Rechercher un contact...">
+            </div>
+
+            <div id="messageSearchResults" class="search-results"></div>
+
+            <div class="conversation-title">
+              Conversations
+            </div>
+
+            <div id="conversationList" class="conversation-list"></div>
+
+          </aside>
+
+
+          <section class="chat-panel" id="privateChat">
+
+            <div class="empty-chat" id="privateEmpty">
+              <div class="empty-icon">◌</div>
+              <h2>Commence une discussion</h2>
+              <p>Sélectionne une conversation ou recherche un utilisateur.</p>
+              <button class="primary-button" id="emptyNewConversation">Nouvelle discussion</button>
+            </div>
+
+
+            <div class="chat-interface hidden" id="privateInterface">
+
+              <header class="chat-header">
+
+                <button class="mobile-back" id="backToConversations">←</button>
+
+                <div class="chat-user-avatar" id="privateAvatar">V</div>
+
+                <div class="chat-user-info">
+                  <strong id="privateUsername">@...</strong>
+                  <span id="privateStatus">Hors ligne</span>
+                </div>
+
+                <div class="chat-header-actions">
+                  <button class="icon-button">⌕</button>
+                  <button class="icon-button">⋯</button>
+                </div>
+
+              </header>
+
+
+              <div class="messages-area" id="privateMessages"></div>
+
+              <div class="typing-indicator hidden" id="privateTyping">
+                <span></span><span></span><span></span>
+                <em>écrit...</em>
+              </div>
+
+
+              <form class="message-composer" id="privateForm">
+
+                <label class="attach-button" title="Joindre un fichier">
+                  +
+                  <input type="file" id="privateFile" hidden>
+                </label>
+
+                <div class="composer-input-wrap">
+                  <div class="file-preview hidden" id="privateFileName"></div>
+                  <input id="privateInput" autocomplete="off" placeholder="Écris un message...">
+                </div>
+
+                <button type="button" class="emoji-button" id="privateEmoji">☺</button>
+                <button type="submit" class="send-button">➤</button>
+
+              </form>
+
+            </div>
+
+          </section>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- STORIES -->
+
+      <section class="page" id="page-stories">
+
+        <div class="page-heading">
+
+          <div>
+            <span class="eyebrow">24 HEURES</span>
+            <h1>Stories</h1>
+            <p>Partage un moment avec ta communauté.</p>
+          </div>
+
+          <button class="primary-button" id="newStoryButton">＋ Ajouter une story</button>
+
+        </div>
+
+
+        <section class="stories-showcase">
+
+          <div class="story-create" id="storyCreateCard">
+
+            <div class="story-create-avatar" id="storyCreateAvatar">V</div>
+
+            <div>
+              <strong>Ta story</strong>
+              <span>Partager une photo ou un fichier</span>
+            </div>
+
+            <button id="storyCreatePlus">＋</button>
+
+          </div>
+
+          <div class="stories-grid" id="storiesGrid"></div>
+
+        </section>
+
+        <div class="story-viewer hidden" id="storyViewer">
+
+          <button class="story-close" id="storyClose">×</button>
+
+          <div class="story-view-card">
+
+            <div class="story-view-header">
+              <div class="avatar" id="storyViewerAvatar">V</div>
+              <strong id="storyViewerUsername">@...</strong>
+            </div>
+
+            <div id="storyViewerContent" class="story-view-content"></div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- PUBLICATIONS -->
+
+      <section class="page" id="page-posts">
+
+        <div class="page-heading">
+
+          <div>
+            <span class="eyebrow">FIL PUBLIC</span>
+            <h1>Publications</h1>
+            <p>Découvre les publications de la communauté.</p>
+          </div>
+
+          <button class="primary-button" id="newPostButton">＋ Publier</button>
+
+        </div>
+
+
+        <div class="create-post-card">
+
+          <div class="avatar" id="postComposerAvatar">V</div>
+
+          <button class="fake-input" id="openPostComposer">
+            Quoi de neuf, <span id="postComposerName">toi</span> ?
+          </button>
+
+          <button class="composer-photo" id="postComposerPhoto">▧</button>
+
+        </div>
+
+
+        <div class="feed" id="postsFeed"></div>
+
+      </section>
+
+
+
+      <!-- SALONS -->
+
+      <section class="page" id="page-rooms">
+
+        <div class="page-heading">
+
+          <div>
+            <span class="eyebrow">COMMUNAUTÉS</span>
+            <h1>Salons</h1>
+            <p>Rejoins une discussion publique par thème.</p>
+          </div>
+
+          <button class="primary-button" id="newRoomButton">＋ Créer un salon</button>
+
+        </div>
+
+        <div class="rooms-grid" id="roomsGrid"></div>
+
+        <section class="room-chat hidden" id="roomChat">
+
+          <header class="room-chat-header">
+
+            <button class="back-button" id="closeRoom">← Salons</button>
+
+            <div class="room-heading">
+              <div class="room-icon" id="roomIcon">#</div>
+              <div>
+                <strong id="roomName">Salon</strong>
+                <span id="roomDescription">Discussion</span>
+              </div>
+            </div>
+
+          </header>
+
+          <div class="messages-area room-messages" id="roomMessages"></div>
+
+          <form class="message-composer" id="roomForm">
+
+            <label class="attach-button">
+              +
+              <input type="file" id="roomFile" hidden>
+            </label>
+
+            <div class="composer-input-wrap">
+              <div class="file-preview hidden" id="roomFileName"></div>
+              <input id="roomInput" autocomplete="off" placeholder="Écrire dans le salon...">
+            </div>
+
+            <button type="submit" class="send-button">➤</button>
+
+          </form>
+
+        </section>
+
+      </section>
+
+
+
+      <!-- PROFIL -->
+
+      <section class="page" id="page-profile">
+
+        <div class="profile-page">
+
+          <div class="profile-cover" id="profileCover">
+
+            <div class="profile-cover-gradient"></div>
+
+            <div class="profile-main-avatar avatar-xl" id="profileAvatar">V</div>
+
+          </div>
+
+
+          <div class="profile-body">
+
+            <div class="profile-actions">
+              <button class="secondary-button">Modifier le profil</button>
+            </div>
+
+            <div class="profile-identity">
+              <h1 id="profileUsername">@...</h1>
+              <span id="profileEmail">...</span>
+              <p id="profileBio">Bienvenue sur mon profil Veyra.</p>
+            </div>
+
+            <div class="profile-stats">
+
+              <div>
+                <strong id="profilePostsCount">0</strong>
+                <span>Publications</span>
+              </div>
+
+              <div>
+                <strong id="profileFollowers">0</strong>
+                <span>Abonnés</span>
+              </div>
+
+              <div>
+                <strong id="profileFollowing">0</strong>
+                <span>Abonnements</span>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+</div>
+
+
+<!-- MODAL PUBLICATION -->
+
+<div class="modal hidden" id="postModal">
+
+  <div class="modal-backdrop"></div>
+
+  <div class="modal-card">
+
+    <div class="modal-header">
+      <div>
+        <span class="eyebrow">NOUVELLE PUBLICATION</span>
+        <h2>Créer une publication</h2>
+      </div>
+
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+
+    <textarea id="postText" placeholder="Écris quelque chose..."></textarea>
+
+    <label class="upload-box">
+      <span>＋</span>
+      <strong>Ajouter un fichier</strong>
+      <small>Photo, image ou document</small>
+      <input type="file" id="postFile" hidden>
+    </label>
+
+    <div id="postFileName" class="selected-file"></div>
+
+    <div class="modal-actions">
+      <button class="secondary-button" data-close-modal>Annuler</button>
+      <button class="primary-button" id="submitPost">Publier</button>
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- MODAL STORY -->
+
+<div class="modal hidden" id="storyModal">
+
+  <div class="modal-backdrop"></div>
+
+  <div class="modal-card">
+
+    <div class="modal-header">
+      <div>
+        <span class="eyebrow">NOUVELLE STORY</span>
+        <h2>Partager un moment</h2>
+      </div>
+
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+
+    <textarea id="storyText" placeholder="Ajouter une légende..."></textarea>
+
+    <label class="upload-box">
+
+      <span>＋</span>
+      <strong>Ajouter une photo ou un fichier</strong>
+      <small>Ta story sera visible pendant 24 heures</small>
+
+      <input type="file" id="storyFile" hidden>
+
+    </label>
+
+    <div id="storyFileName" class="selected-file"></div>
+
+    <div class="modal-actions">
+      <button class="secondary-button" data-close-modal>Annuler</button>
+      <button class="primary-button" id="submitStory">Publier la story</button>
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- TOAST -->
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/app.js"></script>
+
+</body>
+</html>

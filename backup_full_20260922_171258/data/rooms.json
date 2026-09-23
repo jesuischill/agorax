@@ -1,0 +1,38 @@
+[
+  {
+    "id": "general",
+    "name": "Général",
+    "icon": "🌐",
+    "description": "Le salon principal de Veyra"
+  },
+  {
+    "id": "jeux",
+    "name": "Jeux",
+    "icon": "🎮",
+    "description": "Jeux vidéo et gaming"
+  },
+  {
+    "id": "musique",
+    "name": "Musique",
+    "icon": "🎵",
+    "description": "Parler musique"
+  },
+  {
+    "id": "tech",
+    "name": "Technologie",
+    "icon": "💻",
+    "description": "Technologie et informatique"
+  },
+  {
+    "id": "sport",
+    "name": "Sport",
+    "icon": "⚽",
+    "description": "Discussions sportives"
+  },
+  {
+    "id": "creation",
+    "name": "Création",
+    "icon": "🎨",
+    "description": "Art, vidéo et création"
+  }
+]
