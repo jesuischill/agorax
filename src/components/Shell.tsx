@@ -12,7 +12,8 @@ import {
   PlusCircle,
   Settings,
   UserRound,
-  Camera
+  Camera,
+  Shield
 } from "lucide-react";
 
 const links = [
@@ -34,6 +35,7 @@ export default function Shell({
   children: React.ReactNode;
   user: {
     username: string;
+    role: "user" | "owner";
   };
 }) {
   const pathname = usePathname();
@@ -84,6 +86,20 @@ export default function Shell({
             )
           )}
         </nav>
+
+        {user.role === "owner" && (
+          <Link
+            href="/admin"
+            className={
+              active("/admin")
+                ? "active"
+                : ""
+            }
+          >
+            <Shield size={19}/>
+            Admin
+          </Link>
+        )}
 
         <button
           className="logout"

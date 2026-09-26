@@ -7,13 +7,15 @@ import { db } from "./db";
 const COOKIE = "agorax_session";
 const SESSION_DAYS = 30;
 
-type User = {
+export type User = {
   id: string;
   email: string;
   username: string;
   display_name: string;
   bio: string;
   avatar_url: string | null;
+  role: "user" | "owner";
+  banned: number;
 };
 
 function hashToken(token: string) {
@@ -27,7 +29,7 @@ export async function createSession(userId: string) {
   const rawToken = crypto.randomBytes(48).toString("hex");
   const tokenHash = hashToken(rawToken);
 
-  const expires = new Date(
+  const expiresAt = new Date(
     Date.now() +
       SESSION_DAYS * 24 * 60 * 60 * 1000
   );
@@ -44,7 +46,7 @@ export async function createSession(userId: string) {
     crypto.randomUUID(),
     userId,
     tokenHash,
-    expires.toISOString()
+    expiresAt.toISOString()
   );
 
   const cookieStore = await cookies();
@@ -81,32 +83,58 @@ export async function currentUser(): Promise<User | null> {
 
   if (!token) return null;
 
-  const row = db.prepare(`
+  const user = db.prepare(`
     SELECT
       u.id,
       u.email,
       u.username,
       u.display_name,
       u.bio,
-      u.avatar_url
+      u.avatar_url,
+      u.role,
+      u.banned
     FROM sessions s
-    JOIN users u ON u.id = s.user_id
+    JOIN users u
+      ON u.id = s.user_id
     WHERE s.token_hash = ?
       AND datetime(s.expires_at) > datetime('now')
     LIMIT 1
   `).get(hashToken(token)) as User | undefined;
 
-  if (!row) {
+  if (!user) {
     cookieStore.delete(COOKIE);
     return null;
   }
 
-  return row;
+  if (user.banned) {
+    db.prepare(
+      "DELETE FROM sessions WHERE user_id = ?"
+    ).run(user.id);
+
+    cookieStore.delete(COOKIE);
+    return null;
+  }
+
+  return user;
 }
 
 export async function requireUser() {
   const user = await currentUser();
-  if (!user) redirect("/login");
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  return user;
+}
+
+export async function requireOwner() {
+  const user = await currentUser();
+
+  if (!user || user.role !== "owner") {
+    redirect("/feed");
+  }
+
   return user;
 }
 

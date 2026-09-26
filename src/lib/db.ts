@@ -5,10 +5,11 @@ import path from "node:path";
 const dataDir = path.join(process.cwd(), "data");
 fs.mkdirSync(dataDir, { recursive: true });
 
-const filename = process.env.DATABASE_FILE || "data/agorax.db";
-const databasePath = path.isAbsolute(filename)
-  ? filename
-  : path.join(process.cwd(), filename);
+const databasePath = path.join(
+  process.cwd(),
+  "data",
+  "agorax.db"
+);
 
 const globalDb = globalThis as unknown as {
   agoraxDb?: Database.Database;
@@ -34,6 +35,8 @@ CREATE TABLE IF NOT EXISTS users (
   display_name TEXT NOT NULL,
   bio TEXT NOT NULL DEFAULT '',
   avatar_url TEXT,
+  role TEXT NOT NULL DEFAULT 'user',
+  banned INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -133,21 +136,57 @@ CREATE TABLE IF NOT EXISTS notifications (
   FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE SET NULL
 );
 
+CREATE TABLE IF NOT EXISTS admin_actions (
+  id TEXT PRIMARY KEY,
+  admin_user_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  target_type TEXT,
+  target_id TEXT,
+  details TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (admin_user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 CREATE INDEX IF NOT EXISTS posts_created_idx
 ON posts(created_at DESC);
-
-CREATE INDEX IF NOT EXISTS comments_post_idx
-ON comments(post_id, created_at);
-
-CREATE INDEX IF NOT EXISTS stories_expiry_idx
-ON stories(expires_at);
 
 CREATE INDEX IF NOT EXISTS messages_conv_idx
 ON messages(conversation_id, created_at);
 
 CREATE INDEX IF NOT EXISTS notifications_user_idx
 ON notifications(user_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS admin_actions_created_idx
+ON admin_actions(created_at DESC);
 `);
+
+function ensureColumn(
+  table: string,
+  column: string,
+  definition: string
+) {
+  const columns = db
+    .prepare(`PRAGMA table_info(${table})`)
+    .all() as { name: string }[];
+
+  if (!columns.some((item) => item.name === column)) {
+    db.exec(
+      `ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`
+    );
+  }
+}
+
+ensureColumn(
+  "users",
+  "role",
+  "TEXT NOT NULL DEFAULT 'user'"
+);
+
+ensureColumn(
+  "users",
+  "banned",
+  "INTEGER NOT NULL DEFAULT 0"
+);
 
 export function id() {
   return crypto.randomUUID();
