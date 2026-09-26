@@ -1,10 +1,15 @@
-import AppShell from "@/components/AppShell";
-import Discover from "@/components/Discover";
+import { requireUser } from "@/lib/auth";
+import Shell from "@/components/Shell";
+import DiscoverClient from "@/components/DiscoverClient";
 
-export default function DiscoverPage() {
+export const dynamic = "force-dynamic";
+
+export default async function DiscoverPage() {
+  const user = await requireUser();
+
   return (
-    <AppShell>
-      <Discover />
-    </AppShell>
+    <Shell user={user}>
+      <DiscoverClient/>
+    </Shell>
   );
 }

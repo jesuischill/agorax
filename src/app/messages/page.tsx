@@ -1,15 +1,15 @@
 import { requireUser } from "@/lib/auth";
 import Shell from "@/components/Shell";
-import ProfileClient from "@/components/ProfileClient";
+import ChatClient from "@/components/ChatClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProfilePage() {
+export default async function MessagesPage() {
   const user = await requireUser();
 
   return (
     <Shell user={user}>
-      <ProfileClient/>
+      <ChatClient me={user.id}/>
     </Shell>
   );
 }

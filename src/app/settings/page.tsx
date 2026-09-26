@@ -1,37 +1,51 @@
-"use client";
+import { requireUser } from "@/lib/auth";
+import Shell from "@/components/Shell";
 
-import AppShell from "@/components/AppShell";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+export const dynamic = "force-dynamic";
 
-function SettingsContent() {
-  const router = useRouter();
-
-  async function logout() {
-    await createClient().auth.signOut();
-    router.replace("/login");
-  }
+export default async function SettingsPage() {
+  const user = await requireUser();
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="mb-6 text-3xl font-bold">Réglages</h1>
+    <Shell user={user}>
+      <div className="container">
+        <h1 className="page-title">
+          Réglages
+        </h1>
 
-      <div className="space-y-4 rounded-3xl border border-white/10 bg-white/[0.04] p-5">
-        <button
-          onClick={logout}
-          className="w-full rounded-2xl bg-red-500/15 px-4 py-3 text-left font-semibold text-red-300"
+        <p className="subtitle">
+          Ton compte AgoraX.
+        </p>
+
+        <section
+          className="panel"
+          style={{
+            width:"min(100%,680px)",
+            marginTop:18,
+            padding:22
+          }}
         >
-          Se déconnecter
-        </button>
-      </div>
-    </div>
-  );
-}
+          <div className="stack">
+            <div>
+              <div className="muted">
+                Nom d’utilisateur
+              </div>
+              <strong>
+                @{user.username}
+              </strong>
+            </div>
 
-export default function SettingsPage() {
-  return (
-    <AppShell>
-      <SettingsContent />
-    </AppShell>
+            <div>
+              <div className="muted">
+                Email
+              </div>
+              <strong>
+                {user.email}
+              </strong>
+            </div>
+          </div>
+        </section>
+      </div>
+    </Shell>
   );
 }

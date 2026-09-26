@@ -1,10 +1,15 @@
-import AppShell from "@/components/AppShell";
-import Feed from "@/components/Feed";
+import { requireUser } from "@/lib/auth";
+import Shell from "@/components/Shell";
+import FeedClient from "@/components/FeedClient";
 
-export default function FeedPage() {
+export const dynamic = "force-dynamic";
+
+export default async function FeedPage() {
+  const user = await requireUser();
+
   return (
-    <AppShell>
-      <Feed />
-    </AppShell>
+    <Shell user={user}>
+      <FeedClient/>
+    </Shell>
   );
 }

@@ -1,15 +1,15 @@
-import AppShell from "@/components/AppShell";
+import { requireUser } from "@/lib/auth";
+import Shell from "@/components/Shell";
+import NotificationsClient from "@/components/NotificationsClient";
 
-export default function NotificationsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function NotificationsPage() {
+  const user = await requireUser();
+
   return (
-    <AppShell>
-      <div className="mx-auto max-w-2xl">
-        <h1 className="text-3xl font-bold">Notifications</h1>
-        <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-zinc-500">
-          Les notifications sociales sont prêtes à être branchées sur la table
-          notifications.
-        </div>
-      </div>
-    </AppShell>
+    <Shell user={user}>
+      <NotificationsClient/>
+    </Shell>
   );
 }
