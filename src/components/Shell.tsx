@@ -13,7 +13,8 @@ import {
   Settings,
   UserRound,
   Camera,
-  Shield
+  Shield,
+  Hash
 } from "lucide-react";
 
 const links = [
@@ -22,6 +23,7 @@ const links = [
   ["/reels","Reels",Film],
   ["/stories","Stories",Camera],
   ["/messages","Messages",MessageCircle],
+  ["/salons","Salons",Hash],
   ["/notifications","Notifications",Bell],
   ["/profile","Profil",UserRound],
   ["/create","Créer",PlusCircle],

@@ -923,3 +923,523 @@ button {
     flex-direction: column;
   }
 }
+
+/* =========================
+   AGORAX — SALONS
+   ========================= */
+
+.salons-page {
+  min-height: 100%;
+  padding: 24px;
+  background: radial-gradient(circle at top right, rgba(104,119,255,.13), transparent 32%), var(--background, #090b10);
+  color: var(--foreground, #f5f7fb);
+}
+
+.salons-container {
+  width: min(1220px, 100%);
+  margin: 0 auto;
+}
+
+.salons-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.salons-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  opacity: .72;
+  margin-bottom: 8px;
+}
+
+.salons-header h1 {
+  margin: 0;
+  font-size: clamp(30px, 5vw, 46px);
+  letter-spacing: -1.5px;
+}
+
+.salons-header p {
+  margin: 8px 0 0;
+  opacity: .68;
+}
+
+.salons-primary-button,
+.salon-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 14px;
+  padding: 11px 15px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.salons-primary-button {
+  background: #fff;
+  color: #0a0c10;
+}
+
+.salons-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255,90,90,.35);
+  border-radius: 13px;
+  background: rgba(255,90,90,.09);
+  color: #ffd7d7;
+}
+
+.salons-error button,
+.salon-modal-header button,
+.salon-delete-button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.salons-layout {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  min-height: 650px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 24px;
+  background: rgba(255,255,255,.035);
+  box-shadow: 0 24px 80px rgba(0,0,0,.22);
+}
+
+.salons-sidebar {
+  border-right: 1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.12);
+}
+
+.salons-sidebar-title {
+  display: flex;
+  justify-content: space-between;
+  padding: 18px 16px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: .7;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+.salons-list {
+  display: grid;
+  gap: 5px;
+  padding: 8px;
+}
+
+.salon-item {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  border-radius: 15px;
+  padding: 10px;
+  text-align: left;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.salon-item:hover,
+.salon-item.is-active {
+  background: rgba(255,255,255,.08);
+}
+
+.salon-item-icon,
+.salon-chat-icon,
+.salon-welcome-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  background: rgba(255,255,255,.08);
+}
+
+.salon-item-icon {
+  width: 40px;
+  height: 40px;
+  color: #aeb8ff;
+}
+
+.salon-item-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.salon-item-copy strong,
+.salon-item-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.salon-item-copy span {
+  font-size: 12px;
+  opacity: .56;
+}
+
+.salon-item-count {
+  font-size: 11px;
+  opacity: .45;
+}
+
+.salons-empty {
+  padding: 35px 18px;
+  text-align: center;
+  opacity: .55;
+}
+
+.salons-chat {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.salon-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 17px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.salon-chat-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.salon-chat-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  color: #aeb8ff;
+}
+
+.salon-chat-title h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.salon-chat-title p {
+  margin: 4px 0 0;
+  max-width: 520px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: .6;
+  font-size: 13px;
+}
+
+.salon-chat-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.salon-online {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  opacity: .72;
+}
+
+.salon-online-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #62d38b;
+}
+
+.salon-delete-button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  color: #ff9a9a;
+}
+
+.salon-delete-button:hover {
+  background: rgba(255,90,90,.1);
+}
+
+.salon-messages {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.salon-message {
+  display: flex;
+  gap: 11px;
+  padding: 10px 6px;
+}
+
+.salon-avatar {
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  background: rgba(255,255,255,.08);
+  font-weight: 800;
+}
+
+.salon-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.salon-message-main {
+  min-width: 0;
+}
+
+.salon-message-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.salon-message-meta strong {
+  font-size: 14px;
+}
+
+.salon-message-meta span,
+.salon-message-meta time {
+  font-size: 11px;
+  opacity: .45;
+}
+
+.salon-message-main p {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.48;
+  opacity: .9;
+}
+
+.salon-welcome,
+.salon-no-selection {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  text-align: center;
+  padding: 40px;
+  opacity: .86;
+}
+
+.salon-welcome-icon {
+  width: 58px;
+  height: 58px;
+  margin-bottom: 16px;
+}
+
+.salon-welcome h2,
+.salon-welcome h3,
+.salon-no-selection h2 {
+  margin: 0;
+}
+
+.salon-welcome p,
+.salon-no-selection p {
+  margin: 7px 0 0;
+  opacity: .58;
+}
+
+.salon-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 46px;
+  gap: 10px;
+  padding: 14px 16px 16px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.salon-composer input,
+.salon-modal input,
+.salon-modal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px;
+  outline: none;
+  background: rgba(255,255,255,.05);
+  color: inherit;
+  font: inherit;
+}
+
+.salon-composer input {
+  min-height: 46px;
+  padding: 0 14px;
+}
+
+.salon-composer button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 14px;
+  background: #fff;
+  color: #090b10;
+  cursor: pointer;
+}
+
+.salon-composer button:disabled {
+  opacity: .4;
+  cursor: default;
+}
+
+.salon-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(0,0,0,.62);
+  backdrop-filter: blur(10px);
+}
+
+.salon-modal {
+  width: min(520px, 100%);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 22px;
+  padding: 20px;
+  background: #10131a;
+  box-shadow: 0 30px 100px rgba(0,0,0,.45);
+}
+
+.salon-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.salon-modal-header span {
+  font-size: 12px;
+  opacity: .55;
+}
+
+.salon-modal-header h2 {
+  margin: 4px 0 0;
+}
+
+.salon-modal form {
+  display: grid;
+  gap: 14px;
+}
+
+.salon-modal label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.salon-modal input {
+  min-height: 46px;
+  padding: 0 13px;
+}
+
+.salon-modal textarea {
+  min-height: 110px;
+  padding: 12px 13px;
+  resize: vertical;
+}
+
+.salon-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  padding-top: 4px;
+}
+
+.salon-secondary-button {
+  background: rgba(255,255,255,.08);
+  color: inherit;
+}
+
+@media (max-width: 900px) {
+  .salons-page {
+    padding: 14px;
+  }
+
+  .salons-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .salons-layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .salons-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+
+  .salons-list {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .salon-item {
+    min-width: 245px;
+  }
+
+  .salons-chat {
+    min-height: 620px;
+  }
+}
+
+@media (max-width: 560px) {
+  .salon-chat-header {
+    align-items: flex-start;
+  }
+
+  .salon-chat-actions {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .salon-online {
+    display: none;
+  }
+
+  .salon-messages {
+    padding: 14px;
+  }
+
+  .salon-composer {
+    padding: 10px;
+  }
+}
