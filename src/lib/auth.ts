@@ -102,7 +102,7 @@ export async function currentUser(): Promise<User | null> {
   `).get(hashToken(token)) as User | undefined;
 
   if (!user) {
-    cookieStore.delete(COOKIE);
+    
     return null;
   }
 
@@ -111,7 +111,7 @@ export async function currentUser(): Promise<User | null> {
       "DELETE FROM sessions WHERE user_id = ?"
     ).run(user.id);
 
-    cookieStore.delete(COOKIE);
+    
     return null;
   }
 
