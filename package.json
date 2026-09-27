@@ -6,9 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "admin:owner": "node scripts/promote-owner.js"
+    "admin:owner": "node scripts/promote-owner.js",
+    "db:restore": "node --env-file=.env.local scripts/restore-db.mjs",
+    "db:backup": "node --env-file=.env.local scripts/backup-db.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^13.0.3",
     "lucide-react": "^1.48.0",
@@ -22,5 +25,6 @@
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "typescript": "latest"
-  }
+  },
+  "start": "node scripts/restore-db.mjs && next start"
 }

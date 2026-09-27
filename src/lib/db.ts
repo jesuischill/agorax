@@ -1,4 +1,5 @@
 import Database from "better-sqlite3";
+import { createClient } from "@supabase/supabase-js";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -191,3 +192,265 @@ ensureColumn(
 export function id() {
   return crypto.randomUUID();
 }
+
+
+/* AGORAX_SUPABASE_BACKUP_V1 */
+
+const agoraxSupabaseUrl =
+  process.env.SUPABASE_URL?.trim() || "";
+
+const agoraxSupabaseServiceKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || "";
+
+const agoraxSupabaseBucket =
+  process.env.SUPABASE_DB_BUCKET?.trim() ||
+  "agorax-system";
+
+const agoraxSupabaseObject =
+  process.env.SUPABASE_DB_OBJECT?.trim() ||
+  "agorax.db";
+
+const agoraxShouldBackup =
+  Boolean(
+    agoraxSupabaseUrl &&
+    agoraxSupabaseServiceKey
+  ) &&
+  process.env.NEXT_PHASE !==
+    "phase-production-build";
+
+let agoraxBackupTimer: NodeJS.Timeout | null = null;
+let agoraxBackupRunning = false;
+let agoraxBackupPending = false;
+
+async function agoraxBackupDatabase() {
+  if (!agoraxShouldBackup) {
+    return;
+  }
+
+  if (agoraxBackupRunning) {
+    agoraxBackupPending = true;
+    return;
+  }
+
+  agoraxBackupRunning = true;
+
+  try {
+    const supabase = createClient(
+      agoraxSupabaseUrl,
+      agoraxSupabaseServiceKey,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    const bucket = agoraxSupabaseBucket;
+
+    try {
+      await supabase.storage.getBucket(bucket);
+    } catch {
+      await supabase.storage.createBucket(
+        bucket,
+        {
+          public: false
+        }
+      ).catch(() => undefined);
+    }
+
+    const backupDir = path.join(
+      process.cwd(),
+      "data",
+      ".agorax-backup"
+    );
+
+    fs.mkdirSync(backupDir, {
+      recursive: true
+    });
+
+    const snapshotPath = path.join(
+      backupDir,
+      "agorax.snapshot.db"
+    );
+
+    await db.backup(snapshotPath);
+
+    const fileBuffer =
+      await fs.promises.readFile(snapshotPath);
+
+    const fileBlob = new Blob(
+      [fileBuffer],
+      {
+        type: "application/x-sqlite3"
+      }
+    );
+
+    const { error } =
+      await supabase.storage
+        .from(bucket)
+        .upload(
+          agoraxSupabaseObject,
+          fileBlob,
+          {
+            contentType:
+              "application/x-sqlite3",
+            upsert: true,
+            cacheControl: "0"
+          }
+        );
+
+    if (error) {
+      console.error(
+        "❌ Supabase DB backup:",
+        error.message
+      );
+      return;
+    }
+
+    console.log(
+      "✅ AgoraX DB sauvegardée dans Supabase Storage."
+    );
+  } catch (error) {
+    console.error(
+      "❌ Backup Supabase impossible:",
+      error
+    );
+  } finally {
+    agoraxBackupRunning = false;
+
+    if (agoraxBackupPending) {
+      agoraxBackupPending = false;
+      agoraxScheduleBackup();
+    }
+  }
+}
+
+function agoraxScheduleBackup() {
+  if (!agoraxShouldBackup) {
+    return;
+  }
+
+  if (agoraxBackupTimer) {
+    clearTimeout(agoraxBackupTimer);
+  }
+
+  agoraxBackupTimer = setTimeout(
+    () => {
+      void agoraxBackupDatabase();
+    },
+    1000
+  );
+}
+
+const agoraxOriginalPrepare =
+  db.prepare.bind(db);
+
+const agoraxOriginalExec =
+  db.exec.bind(db);
+
+const agoraxOriginalTransaction =
+  db.transaction.bind(db);
+
+Object.defineProperty(
+  db,
+  "prepare",
+  {
+    configurable: true,
+    value: (sql: string) => {
+      const statement =
+        agoraxOriginalPrepare(sql);
+
+      return new Proxy(
+        statement,
+        {
+          get(target, property, receiver) {
+            if (
+              property === "run"
+            ) {
+              return (
+                ...args: any[]
+              ) => {
+                const result =
+                  (target as any).run(
+                    ...args
+                  );
+
+                agoraxScheduleBackup();
+
+                return result;
+              };
+            }
+
+            if (
+              property === "get"
+            ) {
+              return (
+                ...args: any[]
+              ) =>
+                (target as any).get(
+                  ...args
+                );
+            }
+
+            if (
+              property === "all"
+            ) {
+              return (
+                ...args: any[]
+              ) =>
+                (target as any).all(
+                  ...args
+                );
+            }
+
+            return Reflect.get(
+              target,
+              property,
+              receiver
+            );
+          }
+        }
+      );
+    }
+  }
+);
+
+Object.defineProperty(
+  db,
+  "exec",
+  {
+    configurable: true,
+    value: (sql: string) => {
+      const result =
+        agoraxOriginalExec(sql);
+
+      agoraxScheduleBackup();
+
+      return result;
+    }
+  }
+);
+
+Object.defineProperty(
+  db,
+  "transaction",
+  {
+    configurable: true,
+    value: (callback: Function) => {
+      const wrapped =
+        agoraxOriginalTransaction(
+          (...args: any[]) => {
+            const result =
+              callback(...args);
+
+            agoraxScheduleBackup();
+
+            return result;
+          }
+        );
+
+      return wrapped;
+    }
+  }
+);
