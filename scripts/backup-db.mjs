@@ -7,7 +7,7 @@ const url =
   process.env.SUPABASE_URL?.trim();
 
 const key =
-  process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SECRET_KEY?.trim();
 
 const bucket =
   process.env.SUPABASE_DB_BUCKET?.trim() ||
@@ -19,7 +19,7 @@ const objectPath =
 
 if (!url || !key) {
   throw new Error(
-    "SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont nécessaires."
+    "SUPABASE_URL et SUPABASE_SECRET_KEY sont nécessaires."
   );
 }
 

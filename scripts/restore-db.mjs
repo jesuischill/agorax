@@ -17,7 +17,7 @@ const url =
   process.env.SUPABASE_URL?.trim();
 
 const key =
-  process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SECRET_KEY?.trim();
 
 const bucket =
   process.env.SUPABASE_DB_BUCKET?.trim() ||
