@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node scripts/restore-db.mjs && next start",
+    "start": "next start",
     "admin:owner": "node scripts/promote-owner.js",
     "db:restore": "node scripts/restore-db.mjs",
     "db:backup": "node --env-file=.env.local scripts/backup-db.mjs"
